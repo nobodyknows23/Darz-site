@@ -1,1 +1,170 @@
-.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevCoderZ | Gateway_v2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #010409;
+            --card: #0d1117;
+            --accent: #38bdf8;
+            --border: #30363d;
+            --text: #f1f5f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .container {
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        .logo {
+            font-family: 'Space Mono';
+            font-weight: 900;
+            font-size: 2.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(56,189,248,0.3);
+            margin-bottom: 10px;
+        }
+
+        .sub-text {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 40px 20px;
+            border-radius: 16px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            background: rgba(56,189,248,0.02);
+        }
+
+        .card i {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            color: #fff;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 10px;
+            background: rgba(56,189,248,0.1);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Space Mono';
+        }
+
+        footer {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: #484f58;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <div class="logo">&lt;DevCoderZ/&gt;</div>
+        <div class="sub-text">SELECT ACCESS PROTOCOL</div>
+
+        <div class="grid">
+            <a href="https://devcoderzxnt.vercel.app" class="card">
+                <div class="tag">STABLE</div>
+                <i class="fas fa-layer-group"></i>
+                <h3>NT PORTAL</h3>
+                <p>Access the standard NT education framework with full resource integration.</p>
+            </a>
+
+            <a href="https://devcoderzxvt.vercel.app" class="card">
+                <div class="tag">PREMIUM</div>
+                <i class="fas fa-bolt"></i>
+                <h3>VT PORTAL</h3>
+                <p>Exclusive Vibrant Academy module with advanced secure streaming.</p>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        [ CORE_SYSTEM_v2.0 // BY DEVANSH SHARMA ]
+    </footer>
+
+    <script>
+        // Simple entry animation
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = '0.5s ease-out';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 300 * (index + 1));
+        });
+    </script>
+</body>
+</html>
