@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic</title>
+    <link href="https://www.pw.live/batches-new/index.BZrLlnYz.css" rel="stylesheet" type="text/css">
+    <style>
+        body { background: #f9fafb; padding: 20px; font-family: sans-serif; }
+        .wrapper-fOD1sd { max-width: 800px; margin: auto; }
+        .lecture-card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; }
+        .lecture-card:hover { border: 1px solid #22c55e; }
+        #loadingScreen { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">Loading content...</div>
+
+    <div class="wrapper-fOD1sd">
+        <h3 id="topicName"></h3>
+        <div id="contentContainer"></div>
+    </div>
+
+    <script>
+        async function init() {
+            const query = window.location.search.substring(1);
+            const proxyUrl = `https://devcoderz-player.vercel.app/api/stream.js?${query}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('topicName').innerText = data.topic_name || "Topic";
+
+                const container = document.getElementById('contentContainer');
+                const list = data.lectures || [];
+
+                if (list.length > 0) {
+                    container.innerHTML = list.map(item => `
+                        <div class="lecture-card" onclick="window.open('https://www.pw.live/study/batches/lectures/${item.id}', '_blank')">
+                            <img src="${item.image}" style="width:80px; height:60px; border-radius:8px; margin-right:15px; object-fit:cover;">
+                            <div>
+                                <h4 style="margin:0;">${item.name}</h4>
+                                <p style="margin:5px 0 0; color:#666;">Duration: ${item.duration}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = "<h3>No lectures found.</h3>";
+                }
+            } catch (err) {
+                document.getElementById('loadingScreen').innerText = "Error loading data.";
+            }
+        }
+        init();
+    </script>
+</body>
+</html>
