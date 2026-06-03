@@ -7,37 +7,84 @@
     <link href="https://www.pw.live/batches-new/index.BZrLlnYz.css" rel="stylesheet" type="text/css">
     <style>
         body { background: #f9fafb; font-family: sans-serif; margin: 0; padding-bottom: 60px; }
-        .header { background: #4f46e5; color: white; padding: 15px 20px; font-weight: bold; }
-        .wrapper { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .header { background: #4f46e5; color: white; padding: 15px 20px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: space-between; }
+        .wrapper-fOD1sd { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+        .tab-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
         .lecture-card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; }
         .lecture-card:hover { border: 1px solid #4f46e5; }
+        footer { position: fixed; bottom: 0; width: 100%; background: #fff; text-align: center; padding: 10px; font-size: 12px; border-top: 1px solid #e5e7eb; color: #666; }
+        #loadingScreen { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; }
     </style>
 </head>
 <body>
 
-    <div class="header">The DevCoderZ</div>
-    <div class="wrapper">
-        <h3 id="topicName">Loading...</h3>
+    <div class="header">
+        <span>The DevCoderZ</span>
+    </div>
+
+    <div id="loadingScreen">Loading...</div>
+
+    <div class="wrapper-fOD1sd">
+        <h3 id="topicName" style="margin-bottom: 20px;">Loading Topic...</h3>
+        
+        <div class="tabs" id="tabsContainer">
+            <button class="tab-btn" onclick="switchTab('videos')">Lectures</button>
+            <button class="tab-btn" onclick="switchTab('notes')">Notes</button>
+            <button class="tab-btn" onclick="switchTab('dppQuiz')">DPP Quiz</button>
+            <button class="tab-btn" onclick="switchTab('DppNotes')">DPP PDF</button>
+            <button class="tab-btn" onclick="switchTab('DppVideos')">DPP Solutions</button>
+        </div>
+
         <div id="contentContainer"></div>
     </div>
 
+    <footer>Developed by Devansh Sharma</footer>
+
     <script>
         const params = new URLSearchParams(window.location.search);
+        
+        function switchTab(tabName) {
+            params.set('tab', tabName);
+            window.location.search = params.toString();
+        }
+
         async function init() {
+            const currentTab = params.get('tab') || 'videos';
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if(btn.innerText.toLowerCase().replace(' ', '') === currentTab.toLowerCase()) btn.classList.add('active');
+            });
+
             const query = params.toString();
-            const response = await fetch(`https://devcoderz-player.vercel.app/api/stream.js?${query}`);
-            const data = await response.json();
-            document.getElementById('topicName').innerText = data.topic_name || "Topic";
-            
-            const list = data.lectures || data.notes || data.dpp || data.dppNotes || [];
-            document.getElementById('contentContainer').innerHTML = list.map(item => `
-                <div class="lecture-card" onclick="window.location.href='player.html?video_id=${item.id}&batch_id=${item.batch_id}&subject_id=${item.subject_id}&name=${encodeURIComponent(item.name || 'Content')}'">
-                    <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/notes-icon.svg'}" style="width:80px; height:60px; border-radius:8px; margin-right:15px;">
-                    <div>
-                        <h4 style="margin:0; font-size:14px;">${item.name || item.title || "Content"}</h4>
-                    </div>
-                </div>
-            `).join('');
+            const proxyUrl = `https://devcoderz-player.vercel.app/api/stream.js?${query}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('topicName').innerText = data.topic_name || "Topic";
+                
+                const container = document.getElementById('contentContainer');
+                const list = data.lectures || data.notes || data.dpp || data.dppNotes || [];
+
+                if (list.length > 0) {
+                    container.innerHTML = list.map(item => `
+                        <div class="lecture-card" onclick="window.location.href='https://edunova-pw.site/videoplayerr.php?video_id=${item.id}&batch_id=${item.batch_id || ''}&subject_id=${item.subject_id || ''}&topic_id=${item.topic_id || ''}&name=${encodeURIComponent(item.name || 'Content')}'">
+                            <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/notes-icon.svg'}" style="width:80px; height:60px; border-radius:8px; margin-right:15px; object-fit:cover;">
+                            <div>
+                                <h4 style="margin:0; font-size:14px;">${item.name || item.title || item.topicName || "Content"}</h4>
+                                <p style="margin:5px 0 0; color:#666; font-size:12px;">${item.duration ? 'Duration: ' + item.duration : 'Click to View'}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = "<h3>No content found.</h3>";
+                }
+            } catch (err) {
+                document.getElementById('loadingScreen').innerText = "Error loading data.";
+            }
         }
         init();
     </script>
