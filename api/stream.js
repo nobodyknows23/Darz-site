@@ -2,26 +2,25 @@ export default async function handler(req, res) {
     const { video_id, batch_id, subject_id } = req.query;
 
     try {
-        // Step 1: Video details API se URL fetch karein
+        // 1. Pehle manifest URL fetch karo
         const videoApiUrl = `https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batch_id}&childId=${video_id}&subjectId=${subject_id}`;
+        const vRes = await fetch(videoApiUrl);
+        const vData = await vRes.json();
         
-        const response = await fetch(videoApiUrl);
-        const videoData = await response.json();
+        if (!vData.success) return res.status(404).json({ error: "Video not found" });
+        const manifestUrl = vData.data[0].url;
 
-        if (!videoData.success) {
-            return res.status(404).json({ error: "Video not found" });
-        }
+        // 2. Yahan apni "Key Provider" API call karein
+        // Man lijiye aapki API ka format ye hai: /api/get-key?id=video_id
+        const keyApiUrl = `https://apiserver.deltastudy.site/api/pw/get-key?contentId=${video_id}`;
+        const kRes = await fetch(keyApiUrl);
+        const kData = await kRes.json(); 
 
-        // Step 2: Manifest URL mil gaya
-        const manifestUrl = videoData.data[0].url;
-
-        // Step 3: KID aur K (Key) return karein
-        // Note: Agar KID/K har video ke liye alag hain, toh aapko apni 
-        // internal database ya kisi decoder API se fetch karke yahan dalne honge.
+        // 3. Dynamic KID aur K return karein
         res.status(200).json({
             manifest: manifestUrl,
-            kid: "554eb551054a0ed3e3d9e0527930529b", // Yahan dynamic fetch logic lagayein
-            k: "85c2f3ba10c45fdd9147757a29ce066c"    // Yahan dynamic fetch logic lagayein
+            kid: kData.kid, // API se aaya hua dynamic KID
+            k: kData.key    // API se aayi hui dynamic KEY
         });
 
     } catch (error) {
