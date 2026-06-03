@@ -6,12 +6,26 @@
     <title>Secure Lecture Player</title>
     <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/ogx.css">
     <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/plyrx55.css">
-    <style>body { margin:0; background:#000; } .video-container { width:100%; height:auto; position:relative; }</style>
+    <style>
+        body { 
+            margin: 0; 
+            background: #000; 
+        } 
+        .video-container { 
+            width: 100%; 
+            height: 100vh;
+            position: relative; 
+        }
+        video {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
 
 <div class="video-container">
-    <video id="lecture-player" playsinline autoplay></video>
+    <video id="lecture-player" playsinline controls></video>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
@@ -19,37 +33,61 @@
 
 <script>
 (async function() {
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get('video_id');
-    const batchId = params.get('batch_id');
-    const subjectId = params.get('subject_id');
-    const lectureName = params.get('name') || "Lecture";
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const videoId = params.get('video_id');
+        const batchId = params.get('batch_id');
+        const subjectId = params.get('subject_id');
+        const lectureName = params.get('name') || "Lecture";
 
-    // 1. API se data fetch karo
-    const response = await fetch(`https://devcoderz-player.vercel.app/api/stream.js?video_id=${videoId}&batch_id=${batchId}&subject_id=${subjectId}`);
-    const data = await response.json();
+        // Validation
+        if (!videoId || !batchId || !subjectId) {
+            document.body.innerHTML = '<p style="color:red; padding:20px;">Error: Missing parameters</p>';
+            return;
+        }
 
-    const manifestUrl = data.manifest; // API se aane wala MPD link
-    const keyId = data.kid;
-    const keyValue = data.k;
+        // 1. API se data fetch karo
+        const response = await fetch(`https://devcoderz-player.vercel.app/api/stream.js?video_id=${videoId}&batch_id=${batchId}&subject_id=${subjectId}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch video data');
+        }
 
-    const videoEl = document.getElementById('lecture-player');
-    const shakaPlayer = new shaka.Player(videoEl);
+        const data = await response.json();
 
-    shakaPlayer.configure({ drm: { clearKeys: { [keyId]: keyValue } } });
+        const manifestUrl = data.manifest; // API se aane wala MPD link
+        const keyId = data.kid;
+        const keyValue = data.k;
 
-    const manifestObj = new URL(manifestUrl);
-    shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-        if (type !== shaka.net.NetworkingEngine.RequestType.SEGMENT) return;
-        manifestObj.searchParams.forEach((v, k) => {
-            const segUrl = new URL(request.uris[0]);
-            segUrl.searchParams.set(k, v);
-            request.uris[0] = segUrl.toString();
+        if (!manifestUrl || !keyId || !keyValue) {
+            throw new Error('Invalid video data from API');
+        }
+
+        const videoEl = document.getElementById('lecture-player');
+        const shakaPlayer = new shaka.Player(videoEl);
+
+        // DRM configuration
+        shakaPlayer.configure({ 
+            drm: { 
+                clearKeys: { 
+                    [keyId]: keyValue 
+                } 
+            } 
         });
-    });
 
-    await shakaPlayer.load(manifestUrl);
-    new Plyr(videoEl, { autoplay: true });
+        // Manifest load karo
+        await shakaPlayer.load(manifestUrl);
+
+        // Plyr player initialize karo
+        new Plyr(videoEl, { 
+            autoplay: true,
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen']
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        document.body.innerHTML = `<p style="color:red; padding:20px;">Error: ${error.message}</p>`;
+    }
 })();
 </script>
 </body>
