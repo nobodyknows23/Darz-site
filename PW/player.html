@@ -2,45 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Player</title>
+    <title>Secure Lecture Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh} .video-container{width:100%;max-width:900px} video{width:100%}</style>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <style>
+        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        video { width: 100%; max-width: 900px; }
+        .attachment-btn { display: block; margin-top: 15px; color: #fff; text-decoration: none; padding: 10px; background: #4f46e5; border-radius: 5px; }
+    </style>
 </head>
 <body>
-<div class="video-container"><video id="player" playsinline controls></video></div>
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-<script>
-(async function() {
-    const params = new URLSearchParams(window.location.search);
-    const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id');
+    <div style="width:100%; max-width:900px;">
+        <video id="video" controls crossorigin playsinline></video>
+        <a id="attachment-link" class="attachment-btn" style="display:none;" target="_blank">Download Notes</a>
+    </div>
 
-    try {
-        const vidRes = await fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json());
-        const manifestUrl = vidRes.data[0].url;
+    <script>
+        (async function() {
+            const params = new URLSearchParams(window.location.search);
+            const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id'), kid = params.get('kid');
+            const video = document.getElementById('video');
 
-        const videoEl = document.getElementById('player');
-        const player = new shaka.Player(videoEl);
+            try {
+                // Teeno APIs ko ek saath call kar rahe hain
+                const [otpRes, keyRes, vidRes, attRes] = await Promise.all([
+                    fetch(`/api/proxy?endpoint=otp&kid=${kid}`).then(r => r.json()),
+                    fetch(`/api/proxy?endpoint=datacontent&batchId=${bId}&subjectSlug=none&topicSlug=none&contentType=videos`).then(r => r.json()),
+                    fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json()),
+                    fetch(`/api/proxy?endpoint=attachments-url&BatchId=${bId}&SubjectId=${sId}&ContentId=${vId}`).then(r => r.json())
+                ]);
 
-        player.getNetworkingEngine().registerRequestFilter((type, request) => {
-            // Referer zaroori hai
-            request.headers["Referer"] = "https://www.pw.live/";
-            
-            if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-                const mUrl = new URL(manifestUrl);
-                const sUrl = new URL(request.uris[0]);
-                mUrl.searchParams.forEach((v, k) => sUrl.searchParams.set(k, v));
-                request.uris[0] = sUrl.toString();
+                // Attachments handle karein
+                if (attRes.success && attRes.data?.length > 0) {
+                    const attLink = document.getElementById('attachment-link');
+                    attLink.href = attRes.data[0].url;
+                    attLink.style.display = 'block';
+                }
+
+                const manifestUrl = vidRes.data[0].url;
+                const accessKey = keyRes.data || "";
+
+                if (Hls.isSupported()) {
+                    const hls = new Hls({
+                        xhrSetup: function(xhr, url) {
+                            if(accessKey) xhr.setRequestHeader('Authorization', accessKey);
+                            xhr.setRequestHeader('Referer', 'https://www.pw.live/');
+                        }
+                    });
+                    hls.loadSource(manifestUrl);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                } else {
+                    video.src = manifestUrl;
+                }
+                new Plyr(video);
+            } catch (e) {
+                console.error("Error:", e);
             }
-        });
-
-        await player.load(manifestUrl);
-        new Plyr(videoEl);
-    } catch (e) { 
-        console.error("Error:", e); 
-        alert("Video Load Error: Check Console");
-    }
-})();
-</script>
+        })();
+    </script>
 </body>
 </html>
