@@ -23,24 +23,31 @@
 
     <script>
         const params = new URLSearchParams(window.location.search);
+        
         async function init() {
-            const query = params.toString();
-            const response = await fetch(`https://eduvibe-pw-api.wasmer.app/get-lectures.php?${query}`);
-            const data = await response.json();
-            document.getElementById('topicName').innerText = data.topic_name || "Topic";
-            
-            const list = data.lectures || data.notes || data.dpp || data.dppNotes || [];
-            document.getElementById('contentContainer').innerHTML = list.map(item => `
-                <div class="lecture-card" onclick="window.location.href='/player.html?video_id=${item.id}&batch_id=${item.batch_id}&subject_id=${item.subject_id}&name=${encodeURIComponent(item.name || 'Content')}'">
-                    <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/notes-icon.svg'}" style="width:80px; height:60px; border-radius:8px; margin-right:15px;">
-                    <div>
-                        <h4 style="margin:0; font-size:14px;">${item.name || item.title || "Content"}</h4>
+            try {
+                // Direct Eduvibe API call
+                const response = await fetch(`https://eduvibe-pw-api.wasmer.app/get-lectures.php?${params.toString()}`);
+                const data = await response.json();
+                
+                document.getElementById('topicName').innerText = data.topic_name || "Topic";
+
+                const list = data.lectures || data.notes || data.dpp || data.dppNotes || [];
+                
+                document.getElementById('contentContainer').innerHTML = list.map(item => `
+                    <div class="lecture-card" onclick="window.location.href='player.html?video_id=${item.id || item._id}&batch_id=${params.get('batch_id')}&subject_id=${params.get('subject_id')}&name=${encodeURIComponent(item.name || item.topic || 'Content')}'">
+                        <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/notes-icon.svg'}" style="width:80px; height:60px; border-radius:8px; margin-right:15px; object-fit:cover;">
+                        <div>
+                            <h4 style="margin:0; font-size:14px;">${item.name || item.title || "Content"}</h4>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (err) {
+                console.error("API Call Failed:", err);
+                document.getElementById('topicName').innerText = "API Error: Please check console.";
+            }
         }
         init();
     </script>
 </body>
-</html> 
- 
+</html>
