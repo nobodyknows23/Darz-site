@@ -9,13 +9,11 @@
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .video-container { width: 100%; max-width: 900px; }
         video { width: 100%; }
-        .error-msg { color: red; font-family: sans-serif; }
     </style>
 </head>
 <body>
 <div class="video-container">
     <video id="lecture-player" playsinline controls></video>
-    <div id="error-display" class="error-msg"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
@@ -25,33 +23,34 @@
     const videoId = params.get('video_id');
     const batchId = params.get('batch_id');
     const subjectId = params.get('subject_id');
-    const errorDiv = document.getElementById('error-display');
 
     try {
         const vidRes = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json());
-        
-        if (!vidRes.data || vidRes.data.length === 0) {
-            throw new Error("API returned empty data. Check parameters.");
-        }
-
         const manifestUrl = vidRes.data[0].url;
+        
         const videoEl = document.getElementById('lecture-player');
         const shakaPlayer = new shaka.Player(videoEl);
 
         shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-                const manifestObj = new URL(manifestUrl);
+                const manifestUrlObj = new URL(manifestUrl);
                 const segUrl = new URL(request.uris[0]);
-                manifestObj.searchParams.forEach((v, k) => segUrl.searchParams.set(k, v));
+                
+                manifestUrlObj.searchParams.forEach((value, key) => {
+                    segUrl.searchParams.set(key, value);
+                });
+                
                 request.uris[0] = segUrl.toString();
             }
         });
 
         await shakaPlayer.load(manifestUrl);
-        new Plyr(videoEl);
+        new Plyr(videoEl, {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+            settings: ['quality', 'speed']
+        });
     } catch (err) {
-        errorDiv.innerText = "Error: " + err.message;
-        console.error("Full Error:", err);
+        console.error("Player Error:", err);
     }
 })();
 </script>
