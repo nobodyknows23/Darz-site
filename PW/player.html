@@ -2,73 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Secure Lecture Player</title>
+    <title>Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .video-container { width: 100%; max-width: 900px; }
-        video { width: 100%; }
-        .attachment-btn { display: block; margin-top: 15px; color: #fff; text-decoration: none; padding: 10px; background: #4f46e5; border-radius: 5px; text-align: center; font-family: sans-serif; }
-    </style>
+    <style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh} .video-container{width:100%;max-width:900px} video{width:100%}</style>
 </head>
 <body>
-<div class="video-container">
-    <video id="lecture-player" playsinline controls></video>
-    <a id="attachment-link" class="attachment-btn" style="display:none;" target="_blank">Download Notes</a>
-</div>
+<div class="video-container"><video id="player" playsinline controls></video></div>
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 <script>
 (async function() {
     const params = new URLSearchParams(window.location.search);
-    const videoId = params.get('video_id');
-    const batchId = params.get('batch_id');
-    const subjectId = params.get('subject_id');
-    const topicSlug = params.get('topicSlug');
-    const subjectSlug = params.get('subjectSlug');
-    const kid = params.get('kid');
+    const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id');
 
     try {
-        const [otpRes, keyRes, vidRes, attRes] = await Promise.all([
-            fetch(`/api/proxy?endpoint=otp&kid=${kid}`).then(r => r.json()),
-            fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`).then(r => r.json()),
-            fetch(`/api/proxy?endpoint=video-url-details&batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json()),
-            fetch(`/api/proxy?endpoint=attachments-url&BatchId=${batchId}&SubjectId=${subjectId}&ContentId=${videoId}`).then(r => r.json())
-        ]);
-
-        const accessKey = keyRes.data;
+        // 1. Fetch Video URL
+        const vidRes = await fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json());
         const manifestUrl = vidRes.data[0].url;
 
-        if (attRes.success && attRes.data && attRes.data.length > 0) {
-            const attLink = document.getElementById('attachment-link');
-            attLink.href = attRes.data[0].url;
-            attLink.style.display = 'block';
-        }
+        // 2. Fetch Key (Agar slug nahi hai toh khali chhod de)
+        const keyRes = await fetch(`/api/proxy?endpoint=datacontent&batchId=${bId}&subjectSlug=none&topicSlug=none&contentType=videos`).then(r => r.json());
+        const accessKey = keyRes.data || "";
 
-        const videoEl = document.getElementById('lecture-player');
-        const shakaPlayer = new shaka.Player(videoEl);
+        const videoEl = document.getElementById('player');
+        const player = new shaka.Player(videoEl);
 
-        shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-            request.headers["Authorization"] = accessKey;
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+            if(accessKey) request.headers["Authorization"] = accessKey;
             request.headers["Referer"] = "https://www.pw.live/";
-            request.allowCrossSiteCredentials = true;
-            
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-                const manifestObj = new URL(manifestUrl);
-                const segUrl = new URL(request.uris[0]);
-                manifestObj.searchParams.forEach((v, k) => segUrl.searchParams.set(k, v));
-                request.uris[0] = segUrl.toString();
+                const mUrl = new URL(manifestUrl);
+                const sUrl = new URL(request.uris[0]);
+                mUrl.searchParams.forEach((v, k) => sUrl.searchParams.set(k, v));
+                request.uris[0] = sUrl.toString();
             }
         });
 
-        await shakaPlayer.load(manifestUrl);
-        new Plyr(videoEl, {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
-            settings: ['quality', 'speed']
-        });
-    } catch (err) {
-        console.error(err);
-    }
+        await player.load(manifestUrl);
+        new Plyr(videoEl);
+    } catch (e) { console.error("Critical Error:", e); }
 })();
 </script>
 </body>
