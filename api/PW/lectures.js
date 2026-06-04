@@ -10,7 +10,8 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const targetTopicId = topicId || chapter_id;
+    // Yahan topicId ki jagah topic_id use karein jo query se aaya hai
+    const targetTopicId = topic_id || chapter_id;
     const activeTab = tab || 'videos';
 
     if (!batch_id || !subject_id || !targetTopicId) {
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
         return res.status(200).json(data);
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Failed to fetch lectures data securely from core network." });
+        console.error("Fetch Error:", error);
+        return res.status(500).json({ error: "Failed to fetch data." });
     }
 }
