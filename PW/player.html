@@ -1,76 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Secure Player</title>
+    <title>Video Streamer</title>
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <style>
-        body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; }
-        .video-container { width:100%; max-width:900px; }
-        video { width:100%; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; }
+        #video { width: 100%; height: 80vh; }
+        .controls { padding: 20px; display: flex; gap: 10px; }
+        button { padding: 10px 20px; cursor: pointer; background: #5a4bda; border: none; color: white; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <video id="video" controls playsinline></video>
+    <video id="video" controls></video>
+    <div class="controls">
+        <button onclick="downloadVideo()">Download Video</button>
     </div>
 
     <script>
-        (async function() {
-            const params = new URLSearchParams(window.location.search);
-            const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id');
-            const video = document.getElementById('video');
-            const player = new shaka.Player(video);
+        const video = document.getElementById('video');
+        const player = new shaka.Player(video);
 
+        async function initPlayer() {
             try {
-                // 1. Parallel fetch: Video URL aur Datacontent (Keys)
-                const [vidRes, dataRes] = await Promise.all([
-                    fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json()),
-                    fetch(`/api/proxy?endpoint=datacontent&batchId=${bId}&subjectSlug=none&topicSlug=none&contentType=videos`).then(r => r.json())
-                ]);
-
-                const manifestUrl = vidRes.data[0].url;
+                // 1. Fetch APIs (Ye wahi endpoints hain jo aapke proxy/app use karti hai)
+                const vidRes = await fetch('/api/proxy?endpoint=video-url-details').then(r => r.json());
+                const keyRes = await fetch('/api/proxy?endpoint=datacontent').then(r => r.json());
                 
-                // 2. Keys Decrypt/Parse karna
-                // Agar data Base64 encoded hai toh 'atob' use hoga, else direct access
-                let keys = dataRes.data;
-                if (typeof keys === 'string') {
-                    // Agar string hai toh decode karke JSON parse karein
-                    keys = JSON.parse(atob(keys));
-                }
+                const manifestUrl = vidRes.data[0].url;
+                const keys = JSON.parse(atob(keyRes.data)); // Decoding data
 
-                // 3. DRM Configuration (ClearKeys)
-                if (keys && keys.keyid && keys.key) {
-                    player.configure({
-                        drm: {
-                            clearKeys: {
-                                [keys.keyid]: keys.key
-                            }
-                        }
-                    });
-                }
-
-                // 4. Request Filter (Headers injection)
-                player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    request.headers["Referer"] = "https://www.pw.live/";
-                    if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-                        const mUrl = new URL(manifestUrl);
-                        const sUrl = new URL(request.uris[0]);
-                        mUrl.searchParams.forEach((v, k) => sUrl.searchParams.set(k, v));
-                        request.uris[0] = sUrl.toString();
-                    }
+                // 2. Setup DRM/ClearKeys
+                player.configure({
+                    drm: { clearKeys: { [keys.keyid]: keys.key } }
                 });
 
-                // 5. Load Video
+                // 3. Load Video
                 await player.load(manifestUrl);
-                new Plyr(video);
-
             } catch (e) {
-                console.error("Player Load Error:", e);
-                alert("Video Load failed. Check console.");
+                console.error("Error:", e);
             }
-        })();
+        }
+
+        async function downloadVideo() {
+            alert("Download process started. Please check console for progress.");
+            // Yahan par aap 'ffmpeg.wasm' ya 'MediaRecorder' API ka use karke 
+            // blob ko mp4 mein convert kar sakte hain.
+            // Direct download ke liye blob URL use hota hai:
+            const link = document.createElement('a');
+            link.href = video.src;
+            link.download = 'lecture.mp4';
+            link.click();
+        }
+
+        initPlayer();
     </script>
 </body>
 </html>
