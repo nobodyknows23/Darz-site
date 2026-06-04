@@ -2,18 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Lecture Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .video-container { width: 100%; max-width: 900px; }
-        video { width: 100%; }
+        body { margin:0; background:#000; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .video-container { width:100%; max-width:900px; }
+        video { width:100%; }
+        .attachment-btn { display:block; margin-top:15px; color:#fff; text-decoration:none; padding:10px; background:#4f46e5; border-radius:5px; text-align:center; font-family:sans-serif; }
     </style>
 </head>
 <body>
 <div class="video-container">
     <video id="lecture-player" playsinline controls></video>
+    <a id="attachment-link" class="attachment-btn" style="display:none;" target="_blank">Download Notes</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
@@ -23,23 +24,34 @@
     const videoId = params.get('video_id');
     const batchId = params.get('batch_id');
     const subjectId = params.get('subject_id');
+    const topicSlug = params.get('topicSlug');
+    const subjectSlug = params.get('subjectSlug');
 
     try {
-        const vidRes = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json());
+        const [keyRes, vidRes, attRes] = await Promise.all([
+            fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`).then(r => r.json()),
+            fetch(`/api/proxy?endpoint=video-url-details&batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json()),
+            fetch(`/api/proxy?endpoint=attachments-url&BatchId=${batchId}&SubjectId=${subjectId}&ContentId=${videoId}`).then(r => r.json())
+        ]);
+
+        const accessKey = keyRes.data;
         const manifestUrl = vidRes.data[0].url;
-        
+
+        if (attRes.success && attRes.data.length > 0) {
+            const attLink = document.getElementById('attachment-link');
+            attLink.href = attRes.data[0].url;
+            attLink.style.display = 'block';
+        }
+
         const videoEl = document.getElementById('lecture-player');
         const shakaPlayer = new shaka.Player(videoEl);
 
         shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+            request.headers["Authorization"] = accessKey;
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-                const manifestUrlObj = new URL(manifestUrl);
+                const manifestObj = new URL(manifestUrl);
                 const segUrl = new URL(request.uris[0]);
-                
-                manifestUrlObj.searchParams.forEach((value, key) => {
-                    segUrl.searchParams.set(key, value);
-                });
-                
+                manifestObj.searchParams.forEach((v, k) => segUrl.searchParams.set(k, v));
                 request.uris[0] = segUrl.toString();
             }
         });
@@ -50,7 +62,7 @@
             settings: ['quality', 'speed']
         });
     } catch (err) {
-        console.error("Player Error:", err);
+        console.error(err);
     }
 })();
 </script>
