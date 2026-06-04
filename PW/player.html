@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Lecture Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
@@ -28,41 +27,37 @@
     const subjectId = params.get('subject_id');
 
     try {
-        // Delta API se video URL fetch karna
         const response = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`);
         const data = await response.json();
-
-        if (!data.data || data.data.length === 0) throw new Error("Video URL nahi mila");
-
         const manifestUrl = data.data[0].url;
+
         const videoEl = document.getElementById('lecture-player');
-        
-        // Shaka Player Setup
         const shakaPlayer = new shaka.Player(videoEl);
 
-        // Delta/PW ke signed URLs ke liye Networking Filter
+        // PW Signed URL handling: 
+        // Manifest mein jo params hain, unhe har segment request mein append karna
         shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-            if (type !== shaka.net.NetworkingEngine.RequestType.SEGMENT) return;
-            const manifestObj = new URL(manifestUrl);
-            manifestObj.searchParams.forEach((v, k) => {
+            if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+                const manifestObj = new URL(manifestUrl);
                 const segUrl = new URL(request.uris[0]);
-                segUrl.searchParams.set(k, v);
+                
+                // Manifest ke signatures/params segment mein copy karna
+                manifestObj.searchParams.forEach((v, k) => {
+                    segUrl.searchParams.set(k, v);
+                });
+                
                 request.uris[0] = segUrl.toString();
-            });
+            }
         });
 
-        // Load Content
         await shakaPlayer.load(manifestUrl);
-        
-        // Plyr Initialize
         new Plyr(videoEl, {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
             settings: ['quality', 'speed']
         });
 
     } catch (err) {
-        console.error("Delta API Error:", err);
-        alert("Video load nahi ho rahi. Server check karein.");
+        console.error("Player Error:", err);
     }
 })();
 </script>
