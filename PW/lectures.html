@@ -14,37 +14,30 @@
     </style>
 </head>
 <body>
-
     <div class="header">The DevCoderZ</div>
     <div class="wrapper">
         <h3 id="topicName">Loading...</h3>
         <div id="contentContainer"></div>
     </div>
-
     <script>
         const params = new URLSearchParams(window.location.search);
-        
         async function init() {
             try {
-                // Direct Eduvibe API call
                 const response = await fetch(`https://eduvibe-pw-api.wasmer.app/get-lectures.php?${params.toString()}`);
                 const data = await response.json();
-                
                 document.getElementById('topicName').innerText = data.topic_name || "Topic";
-
-                const list = data.lectures || data.notes || data.dpp || data.dppNotes || [];
-                
+                const list = data.lectures || [];
                 document.getElementById('contentContainer').innerHTML = list.map(item => `
-                    <div class="lecture-card" onclick="window.location.href='player.html?video_id=${item.id || item._id}&batch_id=${params.get('batch_id')}&subject_id=${params.get('subject_id')}&name=${encodeURIComponent(item.name || item.topic || 'Content')}'">
+                    <div class="lecture-card" onclick="window.location.href='player.html?video_id=${item.video_id}&batch_id=${item.batch_id}&subject_id=${item.subject_id}&name=${encodeURIComponent(item.name)}'">
                         <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/notes-icon.svg'}" style="width:80px; height:60px; border-radius:8px; margin-right:15px; object-fit:cover;">
                         <div>
-                            <h4 style="margin:0; font-size:14px;">${item.name || item.title || "Content"}</h4>
+                            <h4 style="margin:0; font-size:14px;">${item.name}</h4>
+                            <p style="margin:5px 0 0; color:#666; font-size:12px;">Duration: ${item.duration}</p>
                         </div>
                     </div>
                 `).join('');
             } catch (err) {
-                console.error("API Call Failed:", err);
-                document.getElementById('topicName').innerText = "API Error: Please check console.";
+                document.getElementById('topicName').innerText = "Error loading data.";
             }
         }
         init();
