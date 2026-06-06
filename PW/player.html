@@ -4,47 +4,39 @@
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
 </head>
 <body>
-    <video id="video" controls autoplay></video>
+    <video id="video" controls autoplay style="width:100%"></video>
 
     <script>
         const video = document.getElementById('video');
         const player = new shaka.Player(video);
         const params = new URLSearchParams(window.location.search);
-        
-        // URL se parameters uthao
-        const manifestUrl = params.get('url');
-        const kid = params.get('kid');
-        // Extra params jo key fetch karne ke liye chahiye (ye aapke URL mein hone chahiye)
-        const batchId = params.get('batchId');
-        const subjectSlug = params.get('subjectSlug');
-        const topicSlug = params.get('topicSlug');
 
         async function init() {
             try {
-                // 1. Key fetch karo (Agar URL mein key nahi hai)
-                const keyRes = await fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`);
-                const keyData = await keyRes.json();
-                
-                // Man lo response mein key yahan hai: { "keyid": "...", "key": "..." }
-                const decryptionKey = keyData.key; 
+                // 1. Fetch Metadata (Manifest URL ke liye)
+                const metaRes = await fetch(`/api/proxy?endpoint=datacontent&batchId=${params.get('batchId')}&subjectSlug=${params.get('subjectSlug')}&topicSlug=${params.get('topicSlug')}&contentType=videos`);
+                const meta = await metaRes.json();
+                const videoUrl = meta.data[0].videoUrl; // Yahan structure check kar lein
+                const kid = meta.data[0].keyid;
 
-                // 2. Player Config
+                // 2. Fetch Decryption Key
+                const keyRes = await fetch(`/api/proxy?endpoint=otp&kid=${kid}`);
+                const keyData = await keyRes.json();
+
+                // 3. Configure Player
                 player.configure({
-                    drm: {
-                        clearKeys: { [kid]: decryptionKey }
-                    }
+                    drm: { clearKeys: { [kid]: keyData.key } }
                 });
 
-                // 3. Request Filter
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Referer'] = 'https://pw.live/';
                 });
 
-                // 4. Load
-                await player.load(manifestUrl);
+                await player.load(videoUrl);
+                console.log("Stream Playing...");
             } catch (e) {
-                console.error("Key Fetch/Load Error:", e);
-                alert("Key nahi mili ya loading failed!");
+                console.error("Setup Failed:", e);
+                alert("Error: Check console for missing IDs or API response");
             }
         }
         init();
