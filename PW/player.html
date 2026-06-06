@@ -9,38 +9,42 @@
     <script>
         const video = document.getElementById('video');
         const player = new shaka.Player(video);
-
-        // URL se parameters extract karna
         const params = new URLSearchParams(window.location.search);
-        const manifestUrl = params.get('url'); // URL jo aap pass kar rahe hain
-        const kid = params.get('kid');         // Key ID
+        
+        // URL se parameters uthao
+        const manifestUrl = params.get('url');
+        const kid = params.get('kid');
+        // Extra params jo key fetch karne ke liye chahiye (ye aapke URL mein hone chahiye)
+        const batchId = params.get('batchId');
+        const subjectSlug = params.get('subjectSlug');
+        const topicSlug = params.get('topicSlug');
 
         async function init() {
             try {
-                if (!manifestUrl) {
-                    throw new Error("URL parameter missing in the link!");
-                }
+                // 1. Key fetch karo (Agar URL mein key nahi hai)
+                const keyRes = await fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`);
+                const keyData = await keyRes.json();
+                
+                // Man lo response mein key yahan hai: { "keyid": "...", "key": "..." }
+                const decryptionKey = keyData.key; 
 
-                // Headers configure karna taaki server ko lage request pw.live se hai
-                player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    request.headers['Referer'] = 'https://pw.live/';
-                    request.headers['Origin'] = 'https://pw.live/';
+                // 2. Player Config
+                player.configure({
+                    drm: {
+                        clearKeys: { [kid]: decryptionKey }
+                    }
                 });
 
-                // Agar DRM key mil gayi hai toh apply karein
-                if (kid) {
-                    player.configure({
-                        drm: {
-                            clearKeys: { [kid]: "YOUR_KEY_HERE" } // Yahan dynamic key fetching logic aayega
-                        }
-                    });
-                }
+                // 3. Request Filter
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Referer'] = 'https://pw.live/';
+                });
 
+                // 4. Load
                 await player.load(manifestUrl);
-                console.log("Video Loaded");
             } catch (e) {
-                console.error("Error:", e);
-                alert("Player Error: " + e.message);
+                console.error("Key Fetch/Load Error:", e);
+                alert("Key nahi mili ya loading failed!");
             }
         }
         init();
