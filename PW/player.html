@@ -32,4 +32,38 @@
         <div class="brand">The DevCoderZ</div>
 
         <div class="controls">
-            <div class="progress-bar" id="progress"><div id
+            <div class="progress-bar" id="progress"><div id="bar"></div></div>
+            <div class="buttons">
+                <div class="btn" onclick="seek(-10)">⟲</div>
+                <div class="btn" id="playPause">▶</div>
+                <div class="btn" onclick="seek(10)">⟳</div>
+                <div class="btn" onclick="toggleFS()">⛶</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/PW/player.js"></script>
+
+    <script>
+        // Basic UI Interaction Logic
+        const v = document.getElementById("video");
+        const bar = document.getElementById("bar");
+        const playBtn = document.getElementById("playPause");
+
+        playBtn.onclick = () => {
+            v.paused ? v.play() : v.pause();
+            playBtn.textContent = v.paused ? "▶" : "❚❚";
+        };
+
+        v.ontimeupdate = () => {
+            if(v.duration) bar.style.width = (v.currentTime / v.duration) * 100 + "%";
+        };
+
+        function seek(sec) { v.currentTime += sec; }
+        function toggleFS() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        }
+    </script>
+</body>
+</html>
