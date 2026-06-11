@@ -3,31 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Smooth Player</title>
+<title>Ultra Smooth Player</title>
 <style>
-/* Sky-Blue and White Theme */
-:root { --primary: #0ea5e9; --text: #ffffff; }
-
-*{ margin:0; padding:0; box-sizing:border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
+:root { --primary: #0ea5e9; }
+*{ margin:0; padding:0; box-sizing:border-box; font-family: sans-serif; }
 html,body{width:100%;height:100%;background:#000;overflow:hidden;}
 
 .player{position:fixed;inset:0;background:#000;}
 video{width:100%;height:100%;object-fit:contain;}
 
-/* Branding */
-.top-brand{position:absolute;top:10px;left:0;right:0;z-index:40;text-align:center;pointer-events:none;}
-.brand-name{font-size:14px;font-weight:900;color:var(--primary);text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);}
-.dev-name{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;letter-spacing: 1px;}
+/* Branding Top-Left */
+.top-brand{position:absolute;top:15px;left:15px;z-index:40;pointer-events:none;}
+.brand-name{font-size:16px;font-weight:900;color:var(--primary);text-transform:uppercase;}
 
 /* Controls */
-.controls{position:absolute;bottom:0;width:100%;padding:15px;background:linear-gradient(transparent,rgba(0,0,0,.8));transition:.3s;z-index:35;}
-.progress{height:5px;background:rgba(255,255,255,0.2);border-radius:10px;position:relative;margin-bottom:10px;cursor:pointer;}
-.progress-fill{height:100%;width:0;background:var(--primary);border-radius:10px;position:relative;}
-.thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;}
+.controls{position:absolute;bottom:0;width:100%;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,.9));z-index:35;}
+.progress{height:6px;background:rgba(255,255,255,0.2);border-radius:10px;margin-bottom:15px;cursor:pointer;}
+.progress-fill{height:100%;width:0;background:var(--primary);border-radius:10px;}
 
-.row{display:flex;align-items:center;justify-content:space-between;color:#fff;}
-.btn{width:38px;height:38px;background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;border: 1px solid rgba(255,255,255,0.1);}
-.btn:active{background:var(--primary);}
+.row{display:flex;align-items:center;justify-content:center;gap:20px;color:#fff;}
+.btn{width:45px;height:45px;background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border: 1px solid rgba(255,255,255,0.1);}
 </style>
 </head>
 <body>
@@ -36,53 +31,61 @@ video{width:100%;height:100%;object-fit:contain;}
  <video id="video" playsinline></video>
  
  <div class="top-brand">
-  <div class="brand-name">THE DEVCODERZ</div>
-  <div class="dev-name">Powered by Devansh Sharma</div>
+  <div class="brand-name">The DevCoderZ</div>
  </div>
 
- <div class="controls" id="controls">
-  <div class="progress" id="progress">
-    <div class="progress-fill" id="bar"><div class="thumb" id="thumb"></div></div>
-  </div>
+ <div class="controls">
+  <div class="progress" id="progress"><div class="progress-fill" id="bar"></div></div>
   <div class="row">
-   <div class="btn" id="back">⟲</div>
-   <div class="btn" id="play">▶</div>
-   <div class="btn" id="fwd">⟳</div>
-   <div class="btn" id="fs">⛶</div>
+   <div class="btn" onclick="seek(-10)">⟲</div>
+   <div class="btn" id="playBtn">▶</div>
+   <div class="btn" onclick="seek(10)">⟳</div>
+   <div class="btn" onclick="toggleFS()">⛶</div>
   </div>
  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
-const v=document.getElementById("video"),playBtn=document.getElementById("play"),bar=document.getElementById("bar"),player=document.getElementById("player");
+const v = document.getElementById("video");
+const bar = document.getElementById("bar");
+const playBtn = document.getElementById("playBtn");
 
-// HLS Init
-const urlParams=new URLSearchParams(location.search);
-const url=urlParams.get("Url");
-if(url){
- const decodedUrl=decodeURIComponent(url);
- if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(decodedUrl); hls.attachMedia(v); }
- else{v.src=decodedUrl;}
+// API/URL Connection Logic
+const urlParams = new URLSearchParams(window.location.search);
+const videoUrl = urlParams.get("Url");
+
+if(videoUrl) {
+    const decodedUrl = decodeURIComponent(videoUrl);
+    if(Hls.isSupported()){
+        const hls = new Hls();
+        hls.loadSource(decodedUrl);
+        hls.attachMedia(v);
+    } else {
+        v.src = decodedUrl;
+    }
 }
 
-// Play/Pause
-playBtn.onclick=()=>{ v.paused?v.play():v.pause(); };
-v.onplay=()=>{playBtn.textContent="❚❚";};
-v.onpause=()=>{playBtn.textContent="▶";};
-
-// Progress
-v.ontimeupdate=()=>{ bar.style.width=(v.currentTime/v.duration)*100+"%"; };
-
-// Seek
-document.getElementById("progress").onclick=(e)=>{
- const pos=(e.offsetX/e.target.offsetWidth);
- v.currentTime=pos*v.duration;
+playBtn.onclick = () => {
+    v.paused ? v.play() : v.pause();
+    playBtn.textContent = v.paused ? "▶" : "❚❚";
 };
 
-document.getElementById("back").onclick=()=>v.currentTime-=10;
-document.getElementById("fwd").onclick=()=>v.currentTime+=10;
-document.getElementById("fs").onclick=()=>player.requestFullscreen();
+v.ontimeupdate = () => {
+    bar.style.width = (v.currentTime / v.duration) * 100 + "%";
+};
+
+function seek(sec) { v.currentTime += sec; }
+
+function toggleFS() {
+    if(!document.fullscreenElement) document.getElementById("player").requestFullscreen();
+    else document.exitFullscreen();
+}
+
+document.getElementById("progress").onclick = (e) => {
+    const pos = (e.offsetX / e.target.offsetWidth);
+    v.currentTime = pos * v.duration;
+};
 </script>
 </body>
 </html>
