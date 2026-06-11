@@ -1,21 +1,33 @@
 async function fetchContent(bId, sId, tId, tab, callback) {
-    // Ham direct API hit nahi karenge, ham apni Vercel API ko hit karenge
-    // Vercel API aage Cloudflare bypass handle karegi
-    const proxyUrl = `/api/get-lectures?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${tab}`;
+    const targetUrl = `https://edunova-pw.site/api/get-lectures.php?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${tab}`;
+    
+    // Proxy list: Agar ek fail hoti hai, toh dusri try hogi
+    const proxies = [
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+    ];
 
-    try {
-        const response = await fetch(proxyUrl, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
+    async function attemptFetch(index) {
+        if (index >= proxies.length) {
+            document.getElementById("loadingScreen").innerText = "All proxies failed. API is restricted.";
+            return;
+        }
 
-        if (!response.ok) throw new Error("Network response was not ok");
-        
-        const data = await response.json();
-        callback(data);
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        // Agar error aaye to user ko batane ke liye
-        document.getElementById("loadingScreen").innerText = "Failed to load content. Please refresh.";
+        try {
+            const response = await fetch(proxies[index], {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) throw new Error("Proxy Blocked");
+
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            console.warn(`Proxy ${index} failed, trying next...`);
+            attemptFetch(index + 1);
+        }
     }
+
+    attemptFetch(0);
 }
