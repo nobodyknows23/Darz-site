@@ -36,7 +36,7 @@
         const tId = params.get("chapter_id") || params.get("topic_id");
         const activeTab = params.get("tab") || "videos";
 
-        const targetApi = `https://corsproxy.io/?https://eduvibe-pw-api.wasmer.app/get-lectures.php?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${activeTab}`;
+        const targetApi = `https://eduvibe-pw-api.wasmer.app/get-lectures.php?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${activeTab}`;
 
         fetch(targetApi)
             .then(res => res.json())
