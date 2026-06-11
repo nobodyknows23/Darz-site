@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The DevCoderZ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://dev-coderz-site.vercel.app/api/PW/all-batches-api4.js"></script>
     <style>
         body { background-color: #f8fafc; font-family: sans-serif; }
         .tab-btn { background: #ffffff; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px; font-size: 13px; font-weight: 600; border-radius: 30px; white-space: nowrap; cursor: pointer; }
@@ -37,18 +36,22 @@
         const tId = params.get("topic_id");
         const activeTab = params.get("tab") || "videos";
 
-        window.addEventListener('load', () => {
-            if (typeof fetchContent === 'function') {
-                fetchContent(bId, sId, tId, activeTab, (data) => {
-                    document.getElementById("loadingScreen").style.display = "none";
-                    document.getElementById("topicName").innerText = data.topic_name || "Topic";
-                    renderTabs();
-                    if (activeTab === "videos" || activeTab === "DppVideos") renderLectures(data.lectures || []);
-                    else if (activeTab === "notes" || activeTab === "DppNotes") renderNotes(data.lectures || []);
-                    else renderQuizzes(data.dpp_quizzes || []);
-                });
-            } else {
-                document.getElementById("loadingScreen").innerText = "Error: Script file not found.";
+        window.addEventListener('load', async () => {
+            const apiUrl = `https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${activeTab}`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                document.getElementById("loadingScreen").style.display = "none";
+                document.getElementById("topicName").innerText = data.topic_name || "Topic";
+                renderTabs();
+                
+                if (activeTab.includes("videos")) renderLectures(data.lectures || []);
+                else if (activeTab.includes("notes")) renderNotes(data.lectures || []);
+                else renderQuizzes(data.dpp_quizzes || []);
+            } catch (err) {
+                document.getElementById("loadingScreen").innerText = "Error: Failed to fetch data.";
             }
         });
 
