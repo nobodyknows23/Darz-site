@@ -1,19 +1,21 @@
-export default async function handler(req, res) {
-    const { batchId, subjectSlug, topicSlug, contentType } = req.query;
-
-    const targetUrl = `https://apiserver.deltastudy.site/api/pw/datacontent?batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=${contentType || 'videos'}`;
+async function fetchContent(bId, sId, tId, tab, callback) {
+    // Ham direct API hit nahi karenge, ham apni Vercel API ko hit karenge
+    // Vercel API aage Cloudflare bypass handle karegi
+    const proxyUrl = `/api/get-lectures?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${tab}`;
 
     try {
-        const response = await fetch(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Referer': 'https://www.pw.live/' // Important: PW ko lagega traffic unki site se aa raha hai
-            }
+        const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
         });
 
+        if (!response.ok) throw new Error("Network response was not ok");
+        
         const data = await response.json();
-        res.status(200).json(data);
+        callback(data);
     } catch (error) {
-        res.status(500).json({ error: "Proxy failed" });
+        console.error("Fetch Error:", error);
+        // Agar error aaye to user ko batane ke liye
+        document.getElementById("loadingScreen").innerText = "Failed to load content. Please refresh.";
     }
 }
