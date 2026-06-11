@@ -4,39 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The DevCoderZ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; margin: 0; padding-bottom: 50px; }
-        .lecture-card { cursor: pointer; background: white; margin: 10px; padding: 15px; border-radius: 12px; display: flex; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); align-items: center; }
-        .img-box { width: 120px; height: 80px; position: relative; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+        body { background: #f8fafc; font-family: sans-serif; }
+        .lecture-card { background: white; margin: 10px; padding: 12px; border-radius: 12px; display: flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; align-items: center; }
+        .img-box { width: 100px; height: 70px; position: relative; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eee; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; }
-        .title { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0; }
-        .tab-btn { padding: 10px 20px; border: none; background: #e2e8f0; border-radius: 20px; cursor: pointer; font-weight: 600; }
-        .tab-btn.active { background: #22c55e; color: white; }
+        .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; }
+        .tab-btn { padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; color: #475569; background: #fff; border: 1px solid #e2e8f0; }
+        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
     </style>
 </head>
-<body>
+<body class="pb-16">
 
-    <section id="tabsContainer" style="display: flex; gap: 10px; padding: 15px; overflow-x: auto;">
+    <div id="tabsContainer" class="flex gap-2 p-4 overflow-x-auto bg-white border-b border-gray-100 sticky top-0 z-10">
         <button onclick="loadContent('videos', this)" class="tab-btn active">Lectures</button>
         <button onclick="loadContent('notes', this)" class="tab-btn">Notes</button>
         <button onclick="loadContent('dppQuiz', this)" class="tab-btn">DPP Quiz</button>
-    </section>
+        <button onclick="loadContent('DppNotes', this)" class="tab-btn">DPP PDF</button>
+        <button onclick="loadContent('dppVideos', this)" class="tab-btn">DPP Solution</button>
+    </div>
 
-    <div id="contentContainer"></div>
+    <div id="contentContainer" class="p-2">
+        <div class="text-center mt-10 text-gray-500">Loading content...</div>
+    </div>
+
+    <footer class="text-center p-6 text-xs text-gray-400 font-medium">
+        Developed by Devansh Sharma
+    </footer>
 
     <script>
-        const BASE_URL = "https://mtaiirus-api.onrender.com";
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batch_id");
         const sId = params.get("subject_id");
         const tId = params.get("topic_id");
 
-        async function importAesKey(keyText) {
-            const input = new TextEncoder().encode(keyText);
-            const fixed = new Uint8Array(32);
-            for (let i = 0; i < 32; i++) fixed[i] = i < input.length ? input[i] : 0;
-            return crypto.subtle.importKey("raw", fixed, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+        async function loadContent(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            
+            const container = document.getElementById('contentContainer');
+            container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
+
+            try {
+                // Fetching via API
+                const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
+                const json = await res.json();
+                
+                // Decryption logic
+                const decrypted = await decryptPayload(json.data);
+                const items = decrypted.data || [];
+                
+                render(items, tab);
+            } catch (e) {
+                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
+            }
         }
 
         async function decryptPayload(payload) {
@@ -44,44 +66,37 @@
                 const [ivHex, dataHex] = String(payload).split(":");
                 const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
                 const encrypted = new Uint8Array(dataHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
-                const key = await importAesKey("maggikhalo");
+                const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("maggikhalo".padEnd(32, '\0')), { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
                 const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted);
                 return JSON.parse(new TextDecoder().decode(decrypted));
-            } catch (err) { return { success: false }; }
-        }
-
-        async function loadContent(tab, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            
-            document.getElementById('contentContainer').innerHTML = '<p style="text-align:center;">Loading...</p>';
-
-            try {
-                const res = await fetch(`${BASE_URL}/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
-                const json = await res.json();
-                const decrypted = await decryptPayload(json.data);
-                const items = decrypted.data || [];
-                
-                render(items, tab);
-            } catch (e) {
-                document.getElementById('contentContainer').innerHTML = '<p style="text-align:center;">Error loading content.</p>';
-            }
+            } catch (e) { return { data: [] }; }
         }
 
         function render(items, tab) {
             const container = document.getElementById('contentContainer');
-            container.innerHTML = items.map(item => `
-                <div class="lecture-card" onclick="window.location.href='./player.html?video_id=${item.video_id || item._id}&name=${encodeURIComponent(item.name || item.topic)}'">
+            if(items.length === 0) { container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>'; return; }
+
+            container.innerHTML = items.map(i => `
+                <div class="lecture-card" onclick="handleClick('${tab}', '${i.video_id || i._id}', '${encodeURIComponent(i.name || i.topic || 'Untitled')}')">
                     <div class="img-box">
-                        <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/blue-play-icon.svg'}">
-                        <img src="https://static.pw.live/react-batches/assets/study/blue-play-icon.svg" class="play-icon">
+                        <img src="${i.image || 'https://static.pw.live/react-batches/assets/study/blue-play-icon.svg'}">
+                        ${tab.includes('videos') ? '<img src="https://static.pw.live/react-batches/assets/study/blue-play-icon.svg" class="play-icon">' : ''}
                     </div>
-                    <div>
-                        <p class="title">${item.name || item.topic}</p>
-                        <p style="font-size:12px; color:gray;">${item.duration || ''}</p>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm text-gray-800 leading-tight">${i.name || i.topic || "Untitled Item"}</p>
+                        <p class="text-[11px] text-gray-500 mt-1">${i.duration || ''}</p>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function handleClick(tab, id, name) {
+            if (tab.includes('videos')) {
+                window.location.href = `./player.html?video_id=${id}&name=${name}`;
+            } else {
+                // Notes/PDF ke liye logic
+                alert("Opening: " + decodeURIComponent(name));
+            }
         }
 
         loadContent('videos', document.querySelector('.tab-btn'));
