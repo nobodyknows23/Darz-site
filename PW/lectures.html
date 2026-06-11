@@ -6,7 +6,7 @@
     <title>The DevCoderZ</title>
     <style>
         body { font-family: sans-serif; background: #f8fafc; margin: 0; padding-bottom: 50px; }
-        .lecture-card { cursor: pointer; background: white; margin: 10px; padding: 15px; border-radius: 12px; display: flex; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .lecture-card { cursor: pointer; background: white; margin: 10px; padding: 15px; border-radius: 12px; display: flex; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); align-items: center; }
         .img-box { width: 120px; height: 80px; position: relative; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
         .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; }
@@ -18,51 +18,73 @@
 <body>
 
     <section id="tabsContainer" style="display: flex; gap: 10px; padding: 15px; overflow-x: auto;">
-        <button onclick="changeTab('videos', this)" class="tab-btn active">Lectures</button>
-        <button onclick="changeTab('notes', this)" class="tab-btn">Notes</button>
+        <button onclick="loadContent('videos', this)" class="tab-btn active">Lectures</button>
+        <button onclick="loadContent('notes', this)" class="tab-btn">Notes</button>
+        <button onclick="loadContent('dppQuiz', this)" class="tab-btn">DPP Quiz</button>
     </section>
 
     <div id="contentContainer"></div>
 
     <script>
+        const BASE_URL = "https://mtaiirus-api.onrender.com";
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batch_id");
         const sId = params.get("subject_id");
         const tId = params.get("topic_id");
 
-        async function changeTab(tab, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // API call to mtaiirus proxy
-            const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
-            const data = await res.json();
-            
-            // Yahan hum lectures render kar rahe hain
-            renderLectures(data.lectures || []);
+        async function importAesKey(keyText) {
+            const input = new TextEncoder().encode(keyText);
+            const fixed = new Uint8Array(32);
+            for (let i = 0; i < 32; i++) fixed[i] = i < input.length ? input[i] : 0;
+            return crypto.subtle.importKey("raw", fixed, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
         }
 
-        function renderLectures(list) {
+        async function decryptPayload(payload) {
+            try {
+                const [ivHex, dataHex] = String(payload).split(":");
+                const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
+                const encrypted = new Uint8Array(dataHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
+                const key = await importAesKey("maggikhalo");
+                const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted);
+                return JSON.parse(new TextDecoder().decode(decrypted));
+            } catch (err) { return { success: false }; }
+        }
+
+        async function loadContent(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            
+            document.getElementById('contentContainer').innerHTML = '<p style="text-align:center;">Loading...</p>';
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
+                const json = await res.json();
+                const decrypted = await decryptPayload(json.data);
+                const items = decrypted.data || [];
+                
+                render(items, tab);
+            } catch (e) {
+                document.getElementById('contentContainer').innerHTML = '<p style="text-align:center;">Error loading content.</p>';
+            }
+        }
+
+        function render(items, tab) {
             const container = document.getElementById('contentContainer');
-            container.innerHTML = list.map(i => `
-                <div class="lecture-card" onclick="openLecture('${i.video_id || i._id}', '${encodeURIComponent(i.name)}')">
+            container.innerHTML = items.map(item => `
+                <div class="lecture-card" onclick="window.location.href='./player.html?video_id=${item.video_id || item._id}&name=${encodeURIComponent(item.name || item.topic)}'">
                     <div class="img-box">
-                        <img src="${i.image || 'https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/b5b31992-7931-4bce-9f87-4dee82a6362b.png'}">
+                        <img src="${item.image || 'https://static.pw.live/react-batches/assets/study/blue-play-icon.svg'}">
                         <img src="https://static.pw.live/react-batches/assets/study/blue-play-icon.svg" class="play-icon">
                     </div>
-                    <div style="display: flex; align-items: center;">
-                        <p class="title">${i.name}</p>
+                    <div>
+                        <p class="title">${item.name || item.topic}</p>
+                        <p style="font-size:12px; color:gray;">${item.duration || ''}</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        function openLecture(id, name) {
-            window.location.href = `./player.html?video_id=${id}&name=${name}`;
-        }
-
-        // Init: Pehli baar load hote hi lectures dikhaye
-        changeTab('videos', document.querySelector('.tab-btn'));
+        loadContent('videos', document.querySelector('.tab-btn'));
     </script>
 </body>
 </html>
