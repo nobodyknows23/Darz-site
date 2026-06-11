@@ -2,25 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The DevCoderZ Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
+        :root { --primary: #0ea5e9; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background: #000; color: #fff; overflow: hidden; }
+        body { background: #000; overflow: hidden; }
         
-        #player { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; }
+        #player { position: fixed; inset: 0; }
+        video { width: 100%; height: 100%; object-fit: contain; }
 
         /* Branding Top-Left */
-        .brand { position: absolute; top: 15px; left: 15px; z-index: 10; color: #0ea5e9; font-weight: 900; font-size: 16px; pointer-events: none; text-transform: uppercase; }
+        .brand { position: absolute; top: 15px; left: 15px; z-index: 10; color: var(--primary); font-weight: 900; font-size: 16px; pointer-events: none; text-transform: uppercase; }
 
         /* Controls Bottom */
         .controls { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 10; }
         .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer; margin-bottom: 15px; }
-        #bar { height: 100%; width: 0%; background: #0ea5e9; border-radius: 4px; }
+        #bar { height: 100%; width: 0%; background: var(--primary); border-radius: 4px; }
         
-        .buttons { display: flex; justify-content: center; gap: 25px; }
+        .buttons { display: flex; justify-content: center; gap: 25px; color: #fff; }
         .btn { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
@@ -28,63 +29,7 @@
 
     <div id="player">
         <video id="video" playsinline></video>
-        
         <div class="brand">The DevCoderZ</div>
 
         <div class="controls">
-            <div class="progress-bar" id="progress"><div id="bar"></div></div>
-            <div class="buttons">
-                <div class="btn" onclick="seek(-10)">⟲</div>
-                <div class="btn" id="playPause">▶</div>
-                <div class="btn" onclick="seek(10)">⟳</div>
-                <div class="btn" onclick="toggleFS()">⛶</div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const v = document.getElementById("video");
-        const bar = document.getElementById("bar");
-        const playBtn = document.getElementById("playPause");
-
-        // API Connection & URL Param Logic
-        const params = new URLSearchParams(window.location.search);
-        const videoUrl = params.get("Url"); 
-
-        async function initPlayer() {
-            if (!videoUrl) return;
-            
-            const source = decodeURIComponent(videoUrl);
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(source);
-                hls.attachMedia(v);
-            } else {
-                v.src = source;
-            }
-        }
-
-        playBtn.onclick = () => {
-            v.paused ? v.play() : v.pause();
-            playBtn.textContent = v.paused ? "▶" : "❚❚";
-        };
-
-        v.ontimeupdate = () => {
-            bar.style.width = (v.currentTime / v.duration) * 100 + "%";
-        };
-
-        function seek(sec) { v.currentTime += sec; }
-
-        function toggleFS() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        }
-
-        document.getElementById("progress").onclick = (e) => {
-            v.currentTime = (e.offsetX / e.target.offsetWidth) * v.duration;
-        };
-
-        initPlayer();
-    </script>
-</body>
-</html>
+            <div class="progress-bar" id="progress"><div id
