@@ -1,112 +1,89 @@
 <!DOCTYPE html>
 <html lang="hi" style="user-select: none;">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Premium Player Engine</title>
-    <style>
-        :root { --accent: #0ea5e9; --accentl: #7dd3fc; --bg: #000; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        #player-ui { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        video { width: 100%; height: 100%; object-fit: contain; background: #000; }
-        
-        /* Branding */
-        .brand { position: absolute; top: 20px; left: 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--accentl); border: 1px solid var(--accent); padding: 4px 8px; border-radius: 4px; pointer-events: none; opacity: 0.8; z-index: 10; }
-        
-        /* Double Tap Layer */
-        .tap-layer { position: absolute; inset: 0; display: flex; z-index: 5; }
-        .tap-box { flex: 1; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mtaiirus Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
+  <style>
+    :root { --accent: #0ea5e9; --accentl: #7dd3fc; }
+    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+    #player-container { width: 100vw; height: 100vh; position: relative; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    
+    /* Branding */
+    .branding { position: absolute; top: 15px; left: 15px; font-size: 8px; font-weight: 800; color: var(--accentl); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; opacity: 0.7; z-index: 10; }
 
-        /* Controls */
-        .ui-controls { position: absolute; bottom: 0; width: 100%; padding: 25px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 20; transition: opacity 0.3s; }
-        .time-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-size: 12px; font-weight: 600; }
-        .progress-track { flex: 1; height: 5px; background: rgba(255,255,255,0.2); cursor: pointer; position: relative; border-radius: 3px; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
-        .progress-thumb { position: absolute; right: 0; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px var(--accentl); }
-        
-        .buttons-row { display: flex; align-items: center; gap: 20px; }
-        .icon-btn { cursor: pointer; font-size: 20px; color: #fff; background: none; border: none; padding: 5px; transition: transform 0.2s; }
-        .icon-btn:active { transform: scale(0.9); }
-    </style>
+    /* Footer & Progress */
+    .footer { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); z-index: 20; }
+    .time-display { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
+    .progress-bar { width: 100%; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
+    .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
+    .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: var(--accentl); border-radius: 50%; }
+
+    /* Controls */
+    .controls { display: flex; gap: 15px; margin-top: 15px; }
+    button { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #fff; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
+    
+    /* Double Tap Layer */
+    .tap-layer { position: absolute; inset: 0; display: flex; z-index: 5; }
+    .tap-box { flex: 1; }
+  </style>
 </head>
 <body>
 
-<div id="player-ui">
-    <div class="brand">Developed by Devansh Sharma</div>
-    
-    <div class="tap-layer">
-        <div class="tap-box" id="leftTap"></div>
-        <div class="tap-box" id="rightTap"></div>
-    </div>
+<div id="player-container">
+  <video id="video" playsinline></video>
+  <div class="branding">DEVELOPED BY DEVANSH SHARMA</div>
+  
+  <div class="tap-layer">
+    <div class="tap-box" onclick="seek(-10)"></div>
+    <div class="tap-box" onclick="seek(10)"></div>
+  </div>
 
-    <video id="video" playsinline></video>
-
-    <div class="ui-controls" id="controls">
-        <div class="time-row">
-            <span id="curTime">00:00:00</span>
-            <div class="progress-track" id="track">
-                <div class="progress-fill" id="fill"><div class="progress-thumb"></div></div>
-            </div>
-            <span id="durTime">00:00:00</span>
-        </div>
-        
-        <div class="buttons-row">
-            <button class="icon-btn" id="playBtn">▶</button>
-            <button class="icon-btn" id="fullBtn">⛶</button>
-            <button class="icon-btn" id="dlBtn">⬇</button>
-            <button class="icon-btn" id="attBtn">📎</button>
-            <button class="icon-btn" id="setBtn">⚙</button>
-        </div>
+  <div class="footer">
+    <div class="time-display"><span id="cur">00:00:00</span><span id="dur">00:00:00</span></div>
+    <div id="progressBar" class="progress-bar">
+      <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
     </div>
+    <div class="controls">
+      <button onclick="togglePlay()" id="playBtn">Play/Pause</button>
+      <button onclick="toggleFS()">Full Screen</button>
+      <button onclick="download()">Download</button>
+      <button onclick="alert('Attachments')">📎</button>
+      <button onclick="alert('Settings')">⚙️</button>
+    </div>
+  </div>
 </div>
 
-<script src="/PW/player.js"></script>
 <script>
-    const video = document.getElementById('video');
-    const fill = document.getElementById('fill');
-    const track = document.getElementById('track');
-    
-    // Time Format Logic
-    function formatTime(s) {
-        let h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
-        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    }
+  const video = document.getElementById('video');
+  const player = new shaka.Player(video);
 
-    video.addEventListener('timeupdate', () => {
-        let pct = (video.currentTime / video.duration) * 100;
-        fill.style.width = pct + '%';
-        document.getElementById('curTime').innerText = formatTime(video.currentTime);
-        document.getElementById('durTime').innerText = formatTime(video.duration || 0);
-    });
+  // Time format
+  function fmt(s) {
+    return new Date(s * 1000).toISOString().substr(11, 8);
+  }
 
-    // Double Tap Logic
-    let lastTap = 0;
-    document.getElementById('leftTap').onclick = () => {
-        if(Date.now() - lastTap < 300) video.currentTime -= 10;
-        lastTap = Date.now();
-    };
-    document.getElementById('rightTap').onclick = () => {
-        if(Date.now() - lastTap < 300) video.currentTime += 10;
-        lastTap = Date.now();
-    };
+  // Smooth Progress
+  video.ontimeupdate = () => {
+    let pct = (video.currentTime / video.duration) * 100;
+    document.getElementById('progressPlayed').style.width = pct + '%';
+    document.getElementById('cur').innerText = fmt(video.currentTime);
+    document.getElementById('dur').innerText = fmt(video.duration || 0);
+  };
 
-    // Smooth Drag
-    track.onpointerdown = (e) => {
-        const rect = track.getBoundingClientRect();
-        video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
-    };
-
-    // UI Toggle
-    document.getElementById('playBtn').onclick = () => {
-        video.paused ? video.play() : video.pause();
-        document.getElementById('playBtn').innerText = video.paused ? "▶" : "⏸";
-    };
-
-    document.getElementById('fullBtn').onclick = () => {
-        !document.fullscreenElement ? document.getElementById('player-ui').requestFullscreen() : document.exitFullscreen();
-    };
-    
-    // Note: ensure player.js is loaded correctly and exports required functions.
+  // Double Tap & Seek
+  function seek(sec) { video.currentTime += sec; }
+  function togglePlay() { video.paused ? video.play() : video.pause(); }
+  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
+  
+  // Progress Drag
+  document.getElementById('progressBar').onpointerdown = (e) => {
+    let rect = e.target.getBoundingClientRect();
+    video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
+  };
 </script>
+<script src="/PW/player.js"></script>
 </body>
 </html>
