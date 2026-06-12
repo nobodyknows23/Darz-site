@@ -51,7 +51,7 @@
                 const json = await res.json();
                 const decrypted = await decryptPayload(json.data);
                 
-                // Hum poora 'item' object pass karenge taaki saari details mile
+                
                 render(decrypted.data || [], tab);
             } catch (e) {
                 container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
@@ -73,7 +73,7 @@
             const container = document.getElementById('contentContainer');
             if(items.length === 0) { container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>'; return; }
 
-            // Item ko stringify karke pass kar rahe hain
+           
             container.innerHTML = items.map(i => `
                 <div class="lecture-card" onclick="handleClick('${tab}', ${JSON.stringify(i).replace(/"/g, '&quot;')})">
                     <div class="img-box">
@@ -90,7 +90,7 @@
 
         function handleClick(tab, item) {
             if (tab.includes('videos')) {
-                // FIXED URL: Yahi format aapke player.html ko chahiye
+                
                 const url = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${sId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${sId}&topicSlug=${tId}`;
                 window.location.href = url;
             } else {
