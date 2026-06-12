@@ -3,102 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Premium Player Engine</title>
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
+  <title>DevCoderZ Player</title>
   <style>
     :root { --accent: #0ea5e9; --accentl: #7dd3fc; }
     body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
-    #player-container { width: 100vw; height: 100vh; position: relative; }
+    #player-container { width: 100vw; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; }
     video { width: 100%; height: 100%; object-fit: contain; }
 
-    .branding { position: absolute; top: 15px; left: 15px; font-size: 8px; font-weight: 800; color: var(--accentl); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; z-index: 25; }
-    
-    /* Controls Styling */
-    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); transition: opacity 0.4s ease; z-index: 20; opacity: 1; }
-    .controls-wrapper.hidden { opacity: 0; pointer-events: none; }
+    /* Branding */
+    .branding { position: absolute; top: 15px; left: 15px; z-index: 25; pointer-events: none; }
+    .b1 { font-size: 10px; font-weight: 800; color: var(--accentl); text-transform: uppercase; }
+    .b2 { font-size: 8px; color: #aaa; }
 
-    .time-display { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; font-family: monospace; }
-    .progress-bar { width: 100%; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
-    .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
+    /* Controls */
+    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); transition: opacity 0.3s; z-index: 20; }
+    .hidden { opacity: 0; pointer-events: none; }
+
+    /* Progress & Timer - HH:MM:SS format */
+    .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 10px; font-family: monospace; }
+    .progress-bar { flex: 1; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
+    .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; }
     .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+    
+    /* Timer specific padding to shift left */
+    #dur { margin-left: -15px; } 
 
-    .btn-row { display: flex; gap: 15px; margin-top: 15px; }
-    .btn { background: rgba(255,255,255,0.1); border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-    #play::before { content: "▶"; font-size: 16px; }
-    #play.pause::before { content: "❚❚"; font-size: 14px; }
+    /* Buttons */
+    .btn-row { display: flex; gap: 20px; align-items: center; }
+    .btn { cursor: pointer; font-size: 20px; padding: 5px; }
+    #play.playing::before { content: "❚❚"; }
+    #play::before { content: "▶"; }
 
-    .menu { position: absolute; bottom: 80px; right: 20px; background: #111; padding: 15px; border-radius: 10px; display: none; z-index: 30; border: 1px solid #333; }
-    .menu select { background: #222; color: #fff; border: 1px solid #444; padding: 5px; width: 100%; margin-bottom: 10px; }
+    /* Menu */
+    .menu { position: absolute; bottom: 70px; right: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; border: 1px solid #333; z-index: 30; }
+    .menu label { display: block; font-size: 11px; margin-top: 8px; color: var(--accent); }
   </style>
 </head>
 <body>
 
 <div id="player-container">
   <video id="video" playsinline></video>
-  <div class="branding">DEVELOPED BY DEVANSH SHARMA</div>
+  <div class="branding">
+    <div class="b1">The DevCoderZ</div>
+    <div class="b2">Developed by Devansh Sharma</div>
+  </div>
   
   <div class="controls-wrapper" id="ctrls">
-    <div class="time-display"><span id="cur">00:00:00</span><span id="dur">00:00:00</span></div>
-    <div id="progressBar" class="progress-bar">
-      <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
+    <div class="time-row">
+      <span id="cur">00:00:00</span>
+      <div id="progressBar" class="progress-bar">
+        <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
+      </div>
+      <span id="dur">00:00:00</span>
     </div>
+    
     <div class="btn-row">
-      <div class="btn" id="play" onclick="togglePlay(event)"></div>
-      <div class="btn" id="fs" onclick="toggleFS(event)">⛶</div>
-      <div class="btn" id="settingsBtn" onclick="toggleMenu(event)">⚙️</div>
+      <div class="btn" onclick="seek(-10)">⏪</div>
+      <div class="btn" id="play" onclick="togglePlay()"></div>
+      <div class="btn" onclick="seek(10)">⏩</div>
+      <div class="btn" onclick="toggleFS()">⛶</div>
+      <div class="btn" id="settingsBtn" onclick="toggleMenu()">⚙️</div>
     </div>
   </div>
 
   <div class="menu" id="setMenu">
-    <label>Speed</label>
+    <label>Playback Speed</label>
     <select onchange="video.playbackRate = this.value">
       <option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option>
     </select>
     <label>Quality</label>
-    <select id="qualitySelect"><option value="auto">Auto</option><option value="720">720p</option><option value="480">480p</option></select>
+    <select><option>Auto</option><option>720p</option><option>480p</option></select>
   </div>
 </div>
 
 <script>
-  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), menu = document.getElementById('setMenu');
-  let hideTimer;
+  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), playBtn = document.getElementById('play');
+  
+  function togglePlay() {
+    if(video.paused) { video.play(); playBtn.classList.add('playing'); }
+    else { video.pause(); playBtn.classList.remove('playing'); }
+  }
+  
+  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
+  function toggleMenu() { document.getElementById('setMenu').style.display = document.getElementById('setMenu').style.display === 'block' ? 'none' : 'block'; }
+  function seek(s) { video.currentTime += s; }
 
-  // Function to show controls
-  function showControls() {
-    ctrls.classList.remove('hidden');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => ctrls.classList.add('hidden'), 3000);
+  document.getElementById('player-container').onclick = (e) => {
+    if(!e.target.closest('.controls-wrapper') && !e.target.closest('.menu')) ctrls.classList.toggle('hidden');
+  };
+
+  // HH:MM:SS Time Format
+  function fmt(s) {
+    return new Date(s * 1000).toISOString().substr(11, 8);
   }
 
-  // Global Click handler for show/hide
-  document.getElementById('player-container').onclick = (e) => {
-    if (e.target.closest('.btn') || e.target.closest('.menu') || e.target.closest('#progressBar')) return;
-    
-    if (ctrls.classList.contains('hidden')) {
-      showControls();
-    } else {
-      ctrls.classList.add('hidden');
-      clearTimeout(hideTimer);
-    }
-  };
-
-  function togglePlay(e) { e.stopPropagation(); video.paused ? video.play() : video.pause(); document.getElementById('play').classList.toggle('pause'); }
-  function toggleFS(e) { e.stopPropagation(); !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
-  function toggleMenu(e) { e.stopPropagation(); menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; }
-
-  // Smooth Seek
-  document.getElementById('progressBar').onpointerdown = (e) => {
-    let rect = e.target.getBoundingClientRect();
-    video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
-  };
-
-  function fmt(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
   video.ontimeupdate = () => {
     document.getElementById('progressPlayed').style.width = (video.currentTime / video.duration) * 100 + '%';
     document.getElementById('cur').innerText = fmt(video.currentTime);
     document.getElementById('dur').innerText = fmt(video.duration || 0);
   };
+
+  document.getElementById('progressBar').onpointerdown = (e) => {
+    let rect = e.target.getBoundingClientRect();
+    video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
+  };
 </script>
-<script src="/PW/player.js"></script>
 </body>
 </html>
