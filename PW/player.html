@@ -1,44 +1,106 @@
 <!DOCTYPE html>
 <html lang="hi" style="user-select: none;">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DevCoderZ Player</title>
   <style>
-    /* Fixed Footer Layout */
-    .controls-wrapper { 
-      position: absolute; bottom: 0; width: 100%; 
-      padding: 20px 20px 30px 20px; /* Neeche space badhayi */
-      background: linear-gradient(transparent, rgba(0,0,0,0.8)); 
-      z-index: 20; transition: opacity 0.3s; 
-    }
+    :root { --accent: #0ea5e9; --accentl: #7dd3fc; }
+    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+    #player-container { width: 100vw; height: 100vh; position: relative; }
+    video { width: 100%; height: 100%; object-fit: contain; }
 
-    /* Progress Bar Fix */
-    .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 15px; }
-    .progress-bar { 
-      flex: 1; height: 6px; background: rgba(255,255,255,0.2); 
-      cursor: pointer; position: relative; border-radius: 3px; 
+    /* Branding */
+    .branding { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
+    .b1 { font-size: 10px; font-weight: 800; color: var(--accentl); text-transform: uppercase; }
+    .b2 { font-size: 8px; color: #aaa; }
+
+    /* Controls Container - Fixed */
+    .controls-wrapper { 
+      position: absolute; bottom: 0; width: 100%; padding: 20px; 
+      background: linear-gradient(transparent, #000); 
+      z-index: 100; transition: opacity 0.3s; 
     }
-    .progress-played { 
-      height: 100%; background: var(--accent); width: 0%; 
-      border-radius: 3px; position: relative; 
-    }
-    /* White dot (thumb) Fix */
-    .thumb { 
-      position: absolute; right: -6px; top: -3px; 
-      width: 12px; height: 12px; background: #fff; 
-      border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);
-    }
+    .hidden { opacity: 0; pointer-events: none; }
+
+    /* Progress Bar */
+    .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 12px; font-family: monospace; }
+    .progress-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.2); cursor: pointer; position: relative; border-radius: 3px; }
+    .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
+    .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; }
+    
+    /* Buttons Row */
+    .btn-row { display: flex; gap: 15px; align-items: center; }
+    .btn { cursor: pointer; font-size: 20px; padding: 5px; color: white; }
+    #play.playing::before { content: "❚❚"; }
+    #play::before { content: "▶"; }
+
+    /* Settings Menu */
+    .menu { position: absolute; bottom: 70px; right: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; border: 1px solid #333; z-index: 150; }
   </style>
 </head>
 <body>
+
+<div id="player-container">
+  <video id="video" playsinline></video>
+  
+  <div class="branding">
+    <div class="b1">The DevCoderZ</div>
+    <div class="b2">Developed by Devansh Sharma</div>
+  </div>
+  
   <div class="controls-wrapper" id="ctrls">
     <div class="time-row">
       <span id="cur">00:00:00</span>
       <div id="progressBar" class="progress-bar">
-        <div id="progressPlayed" class="progress-played">
-          <div class="thumb"></div>
-        </div>
+        <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
       </div>
-      <span id="dur">00:00:00</span>
+      <span id="dur" style="margin-left:5px;">00:00:00</span>
     </div>
+    
+    <div class="btn-row">
+      <div class="btn" onclick="seek(-10)">⏪</div>
+      <div class="btn" id="play" onclick="togglePlay()"></div>
+      <div class="btn" onclick="seek(10)">⏩</div>
+      <div class="btn" onclick="toggleFS()">⛶</div>
+      <div class="btn" onclick="download()">⬇️</div>
+      <div class="btn" id="settingsBtn" onclick="toggleMenu()">⚙️</div>
     </div>
+  </div>
+
+  <div class="menu" id="setMenu">
+    <label>Speed</label>
+    <select onchange="video.playbackRate = this.value">
+      <option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+    </select>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), menu = document.getElementById('setMenu'), playBtn = document.getElementById('play');
+
+  function togglePlay() {
+    if(video.paused) { video.play(); playBtn.classList.add('playing'); }
+    else { video.pause(); playBtn.classList.remove('playing'); }
+  }
+  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
+  function toggleMenu() { menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; }
+  function seek(s) { video.currentTime += s; }
+  function download() { window.location.href = video.src; }
+
+  // Click handler to show/hide
+  document.getElementById('player-container').onclick = (e) => {
+    if(menu.style.display === 'block') { menu.style.display = 'none'; return; }
+    if(!e.target.closest('.controls-wrapper')) ctrls.classList.toggle('hidden');
+  };
+
+  // Timer logic
+  function fmt(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
+  video.ontimeupdate = () => {
+    document.getElementById('progressPlayed').style.width = (video.currentTime / video.duration) * 100 + '%';
+    document.getElementById('cur').innerText = fmt(video.currentTime);
+    document.getElementById('dur').innerText = fmt(video.duration || 0);
+  };
+</script>
 </body>
 </html>
