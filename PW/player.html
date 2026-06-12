@@ -11,25 +11,23 @@
     #player-container { width: 100vw; height: 100vh; position: relative; }
     video { width: 100%; height: 100%; object-fit: contain; }
 
-    /* Branding & Controls */
     .branding { position: absolute; top: 15px; left: 15px; font-size: 8px; font-weight: 800; color: var(--accentl); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; z-index: 25; }
-    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); transition: opacity 0.3s; z-index: 20; }
-    .hidden { opacity: 0; pointer-events: none; }
+    
+    /* Controls Styling */
+    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); transition: opacity 0.4s ease; z-index: 20; opacity: 1; }
+    .controls-wrapper.hidden { opacity: 0; pointer-events: none; }
 
-    /* Progress & Timer */
     .time-display { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; font-family: monospace; }
     .progress-bar { width: 100%; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
     .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
     .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
 
-    /* Buttons */
     .btn-row { display: flex; gap: 15px; margin-top: 15px; }
     .btn { background: rgba(255,255,255,0.1); border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
     #play::before { content: "▶"; font-size: 16px; }
     #play.pause::before { content: "❚❚"; font-size: 14px; }
 
-    /* Settings Menu */
-    .menu { position: absolute; bottom: 70px; right: 20px; background: #111; padding: 15px; border-radius: 10px; display: none; z-index: 30; border: 1px solid #333; }
+    .menu { position: absolute; bottom: 80px; right: 20px; background: #111; padding: 15px; border-radius: 10px; display: none; z-index: 30; border: 1px solid #333; }
     .menu select { background: #222; color: #fff; border: 1px solid #444; padding: 5px; width: 100%; margin-bottom: 10px; }
   </style>
 </head>
@@ -45,9 +43,9 @@
       <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
     </div>
     <div class="btn-row">
-      <div class="btn" id="play" onclick="togglePlay()"></div>
-      <div class="btn" id="fs" onclick="toggleFS()">⛶</div>
-      <div class="btn" id="settingsBtn" onclick="toggleMenu()">⚙️</div>
+      <div class="btn" id="play" onclick="togglePlay(event)"></div>
+      <div class="btn" id="fs" onclick="toggleFS(event)">⛶</div>
+      <div class="btn" id="settingsBtn" onclick="toggleMenu(event)">⚙️</div>
     </div>
   </div>
 
@@ -62,23 +60,31 @@
 </div>
 
 <script>
-  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls');
+  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), menu = document.getElementById('setMenu');
   let hideTimer;
 
-  // Auto Hide Controls
-  function resetTimer() {
+  // Function to show controls
+  function showControls() {
     ctrls.classList.remove('hidden');
     clearTimeout(hideTimer);
     hideTimer = setTimeout(() => ctrls.classList.add('hidden'), 3000);
   }
-  document.onmousemove = resetTimer;
-  document.onclick = (e) => { if(!e.target.closest('.menu')) { resetTimer(); if(e.target.id !== 'play' && e.target.id !== 'fs') ctrls.classList.toggle('hidden'); } };
 
-  // Play/Pause
-  function togglePlay() {
-    if(video.paused) { video.play(); document.getElementById('play').classList.add('pause'); }
-    else { video.pause(); document.getElementById('play').classList.remove('pause'); }
-  }
+  // Global Click handler for show/hide
+  document.getElementById('player-container').onclick = (e) => {
+    if (e.target.closest('.btn') || e.target.closest('.menu') || e.target.closest('#progressBar')) return;
+    
+    if (ctrls.classList.contains('hidden')) {
+      showControls();
+    } else {
+      ctrls.classList.add('hidden');
+      clearTimeout(hideTimer);
+    }
+  };
+
+  function togglePlay(e) { e.stopPropagation(); video.paused ? video.play() : video.pause(); document.getElementById('play').classList.toggle('pause'); }
+  function toggleFS(e) { e.stopPropagation(); !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
+  function toggleMenu(e) { e.stopPropagation(); menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; }
 
   // Smooth Seek
   document.getElementById('progressBar').onpointerdown = (e) => {
@@ -92,9 +98,6 @@
     document.getElementById('cur').innerText = fmt(video.currentTime);
     document.getElementById('dur').innerText = fmt(video.duration || 0);
   };
-
-  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
-  function toggleMenu() { document.getElementById('setMenu').style.display = document.getElementById('setMenu').style.display === 'block' ? 'none' : 'block'; }
 </script>
 <script src="/PW/player.js"></script>
 </body>
