@@ -1,0 +1,2130 @@
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>THE DEVCODERZ</title>
+  
+  <!-- Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #0052FF;
+      --primary-hover: #0041C4;
+      --primary-glow: rgba(0, 82, 255, 0.15);
+      --bg-white: #FFFFFF;
+      --bg-slate: #F8FAFC;
+      --text-main: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #64748B;
+      --border-color: rgba(0, 82, 255, 0.08);
+      --card-bg: #FFFFFF;
+      --card-shadow: 0 10px 30px rgba(0, 82, 255, 0.04);
+      --success: #00E676;
+      --danger: #FF3366;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden; /* Strictly prevent desktop and mobile horizontal overflow */
+    }
+
+    body {
+      background-color: var(--bg-slate);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Fixed Header Nav */
+    header {
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-img {
+      height: 44px;
+      width: auto;
+    }
+
+    .logo-text {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--primary-glow);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* Classroom Layout Grid */
+    .classroom-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem 3rem; /* Generous bottom padding to prevent mobile layout cut-off */
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex-grow: 1;
+    }
+
+    /* Logo-Only Billboard (Rectangular Ambient Backdrop Frame) */
+    .batch-banner-billboard-only {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 150px; /* Highly optimized height for a sleeker look */
+      overflow: hidden;
+      position: relative;
+      background-color: var(--bg-white);
+    }
+
+    /* Ambient blurred background layer using the batch logo itself */
+    .batch-banner-billboard-only-bg {
+      position: absolute;
+      top: -15px; left: -15px; right: -15px; bottom: -15px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(20px) brightness(0.98);
+      opacity: 0.15;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+.billboard-logo-only {
+      width: 100%;
+      height: auto; /* Scales dynamically based on the native rectangular image ratio */
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .batch-banner-billboard-only:hover .billboard-logo-only {
+      transform: scale(1.03);
+    }
+
+    /* Horizontal Scheduled Lectures Row with Snapping and Auto Scroll features */
+    .schedule-header-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 0.8rem;
+    }
+
+    .lecture-schedule-section h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swipe-indicator {
+      font-size: 0.78rem;
+      color: var(--primary);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: sideBounce 1.5s infinite;
+    }
+
+    .scheduled-lectures-row {
+      display: flex;
+      gap: 1.2rem;
+      overflow-x: auto;
+      padding: 0.2rem 0.2rem 1rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-glow) transparent;
+      scroll-snap-type: x mandatory; /* Interactive snapping carousel */
+      -webkit-overflow-scrolling: touch; /* Momentum scroll for touch screens */
+      width: 100%;
+    }
+
+    .scheduled-lectures-row::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .scheduled-lectures-row::-webkit-scrollbar-thumb {
+      background: rgba(0, 82, 255, 0.15);
+      border-radius: 10px;
+    }
+
+    .scheduled-card {
+      flex: 0 0 290px; /* Snaps perfectly inside mobile screen ratios */
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.5rem 1.2rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.8rem;
+      transition: border-color 0.3s;
+      scroll-snap-align: start; /* Target viewport snapping anchor */
+    }
+
+    .scheduled-card:hover {
+      border-color: rgba(0, 82, 255, 0.2);
+    }
+
+    .scheduled-header-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge-status {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.25rem 0.7rem;
+      border-radius: 50px;
+    }
+
+    .badge-status.scheduled {
+      background: rgba(0, 82, 255, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(0, 82, 255, 0.15);
+    }
+
+    .badge-status.ended {
+      background: var(--bg-slate);
+      color: var(--text-muted);
+    }
+
+    /* Big Teacher Profile Portrait */
+    .teacher-portrait-big {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      box-shadow: 0 4px 15px rgba(0, 82, 255, 0.12);
+    }
+
+    .teacher-name-big {
+      font-size: 0.85rem;
+      font-weight: 750;
+      color: var(--text-secondary);
+    }
+
+    /* Dynamic Lecture Time Badge style */
+    .lecture-time-badge {
+      font-size: 0.78rem;
+      color: var(--primary);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 82, 255, 0.04);
+      padding: 0.3rem 0.8rem;
+      border-radius: 8px;
+    }
+
+    .lecture-topic-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 2.7rem;
+    }
+
+    .btn-lecture-action {
+      width: 100%;
+      background: var(--bg-slate);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      padding: 0.7rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn-lecture-action:hover {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    /* Navigation Tabs Navbar */
+    .tab-navbar {
+      display: flex;
+      border-bottom: 2px solid var(--border-color);
+      gap: 2rem;
+      margin: 1.5rem 0 1rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tab-navbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .workspace-tab {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 700;
+      padding-bottom: 0.8rem;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s;
+      white-space: nowrap;
+    }
+
+    .workspace-tab:hover, .workspace-tab.active {
+      color: var(--primary);
+    }
+
+    .workspace-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 50px;
+    }
+
+    /* Workspace Panels */
+    .workspace-panel {
+      display: none;
+      width: 100%;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .workspace-panel.active {
+      display: block;
+    }
+
+    /* 1. Orientation Tab with complete mobile responsive structure */
+    .orientation-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 2rem;
+      width: 100%;
+    }
+
+    .about-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--card-shadow);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .about-card h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Prevent Raw External Description HTML Overflows on Mobile Screen sizes */
+    .about-html {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      word-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .about-html * {
+      max-width: 100% !important;
+      word-wrap: break-word !important;
+      white-space: normal !important;
+    }
+
+    .faculty-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      width: 100%;
+    }
+
+    .faculty-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.2rem;
+      display: flex;
+      gap: 1.1rem;
+      align-items: center;
+      box-shadow: var(--card-shadow);
+    }
+
+    .faculty-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary);
+    }
+
+    .faculty-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.15rem;
+    }
+
+    .faculty-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 2. Subjects Tab */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    .subject-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 1.8rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .subject-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 82, 255, 0.2);
+    }
+
+    .subject-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-slate);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .subject-icon i {
+      font-size: 1.3rem;
+      color: var(--primary);
+    }
+
+    .subject-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.4rem;
+    }
+
+    .subject-teacher {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .subject-foot {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    /* 3. Announcements Tab */
+    .announcements-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .announcement-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.6rem;
+      box-shadow: var(--card-shadow);
+    }
+
+    .announcement-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .announcement-author span i {
+      color: var(--primary);
+      margin-right: 5px;
+    }
+
+    .announcement-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.6rem;
+    }
+
+    .announcement-body {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .announcement-img-inline {
+      width: 100%;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-top: 1.2rem;
+      background: var(--bg-slate);
+    }
+
+    /* Live Announcement Alert Popup */
+    .live-alert-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(3, 5, 12, 0.65);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .live-alert-modal {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      max-width: 380px;
+      width: 90%;
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .live-alert-modal i.modal-icon {
+      font-size: 3rem;
+      color: var(--primary);
+      margin-bottom: 1.2rem;
+    }
+
+    .live-alert-modal h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 0.6rem;
+    }
+
+    .live-alert-modal p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.8rem;
+      line-height: 1.55;
+    }
+
+    .btn-modal-close {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.8rem 1.8rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+
+    .btn-modal-close:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Skeleton Loading UI */
+    .skeleton-hero {
+      background: #E2E8F0;
+      height: 90px;
+      border-radius: 16px;
+      animation: shiver 1.5s infinite;
+    }
+
+    @keyframes sideBounce {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(4px); }
+    }
+
+    @keyframes shiver {
+      from { background-position: 200% 0; }
+      to { background-position: -200% 0; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Flexible Grid System breakpoints */
+    @media (max-width: 768px) {
+      .orientation-grid {
+        grid-template-columns: 1fr; /* Strictly collapse into single vertical column on tablets/phones */
+        gap: 1.5rem;
+      }
+      .classroom-container {
+        padding: 0 1rem 3rem;
+        margin: 1rem auto;
+      }
+      .tab-navbar {
+        gap: 1.2rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .batch-banner-billboard-only {
+        padding: 0;
+      }
+      .scheduled-card {
+        flex: 0 0 270px; /* Snaps safely within mobile widths */
+      }
+    }
+    
+    .badge-status.live {
+      background: rgba(239, 68, 68, 0.08);
+      color: #FF3366;
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      animation: pulseLive 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseLive {
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+  </style>
+
+<!-- STUDYWALLAH UNIFIED SECURITY BODYGUARD & COUNTDOWN TIMER -->
+<script>
+  (function() {
+    function setCookie(name, value, days = 30) {
+      let expires = "";
+      if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + encodeURIComponent(value || "") + expires + "; path=/; SameSite=Strict; Secure";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+      return null;
+    }
+
+    function clearAccessKey() {
+      document.cookie = "studywallah_access_key=; Max-Age=-99999999; path=/; SameSite=Strict; Secure";
+      localStorage.removeItem('studywallah_valid_till');
+      if (window.studywallah_timer_interval) {
+        clearInterval(window.studywallah_timer_interval);
+      }
+    }
+
+    // Capture access key from URL parameters if redirected from verify route
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryKey = urlParams.get('key');
+    if (queryKey) {
+      const keysCache = JSON.parse(localStorage.getItem('studywallah_keys_cache') || "{}");
+      
+      // ONE-TIME ACTIVATION LOCK: If the key was already registered in the system before, reject duplication
+      if (keysCache[queryKey]) {
+        alert("This access key has already been used once. Please generate a new key.");
+        clearAccessKey();
+        // Clean URL parameters immediately
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        window.location.href = "key-gate.html";
+        return;
+      }
+
+      setCookie('studywallah_access_key', queryKey, 1);
+      // Clean URL parameter visually to keep the address bar clean
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+
+    const path = window.location.pathname.toLowerCase();
+    const isIndexPage = path.endsWith("/") || path.endsWith("/index.html") || path === "";
+    const isAdminPage = path.includes("/admin") || path.includes("admin.html");
+    const isBatchesPage = path.includes("/batches") || path.includes("batches.html");
+    const isKeyGatePage = path.includes("/key-gate") || path.includes("key-gate.html");
+
+    // Index page and Admin panel are bypass-exempt from student guards
+    if (isIndexPage || isAdminPage) {
+      return; 
+    }
+
+    const storedUser = getCookie('studywallah_user_name');
+    const storedEmail = getCookie('studywallah_user_email');
+    const storedKey = getCookie('studywallah_access_key');
+
+    // Key Gate page logic
+    if (isKeyGatePage) {
+      if (!storedUser || !storedEmail) {
+        window.location.href = "batches.html";
+      }
+      return;
+    }
+
+    // Routing rules for Batches or Classroom details pages (Registration check only)
+    if (isBatchesPage) {
+      if (!storedUser || !storedEmail) {
+        return; // Allow batches.html to prompt its registration modal
+      }
+    } else {
+      if (!storedUser || !storedEmail) {
+        window.location.href = "batches.html";
+        return;
+      }
+    }
+
+    // Fast-path local validation to prevent screen flashing (only runs if a key is present)
+    const validTillStr = localStorage.getItem('studywallah_valid_till');
+    if (validTillStr && storedKey) {
+      const validTill = parseInt(validTillStr, 10);
+      if (!isNaN(validTill) && Date.now() > validTill) {
+        clearAccessKey();
+        window.location.href = "key-gate.html";
+        return;
+      }
+    }
+
+    // Active remote verification check with Cloudflare Worker
+    async function verifyWithWorker() {
+      let validityHours = 24; // Default fallback validity lifespan
+
+      // 1. Check Global Settings configuration first with cache-busting
+      try {
+        const settingsRes = await fetch(`https://studywallah-db.vercel.app/admin/users?_t=${Date.now()}`);
+        if (settingsRes.ok) {
+          const users = await settingsRes.json();
+          const bypassConfig = users.find(u => u.email === "system_settings@gmail.com");
+          
+          if (bypassConfig) {
+            // A. Check Global Bypass State (banned=true means Key Bypass is active)
+            if (bypassConfig.banned === true) {
+              const badge = document.getElementById('key-timer-badge');
+              if (badge) badge.style.display = "none";
+              if (window.studywallah_timer_interval) {
+                clearInterval(window.studywallah_timer_interval);
+              }
+              return; // Skip key gate entirely
+            }
+
+            // B. Extract Dynamic Key Validity Lifespan (stored in config name) [1, 2]
+            if (bypassConfig.name) {
+              validityHours = parseInt(bypassConfig.name) || 24;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Unable to check global bypass state. Falling back to local key checks.");
+      }
+
+      // 2. Since Global Bypass is NOT active, a valid key is strictly mandatory
+      if (!storedKey) {
+        window.location.href = "key-gate.html";
+        return;
+      }
+
+      // 3. Fast-path local validation for current active sessions
+      if (validTillStr) {
+        const validTill = parseInt(validTillStr, 10);
+        if (!isNaN(validTill) && Date.now() > validTill) {
+          clearAccessKey();
+          window.location.href = "key-gate.html";
+          return;
+        }
+      }
+
+      // 4. Remote server key validation with cache-busting
+      try {
+        const verifyRes = await fetch(`https://studywallah-db.vercel.app/check?key=${storedKey}&_t=${Date.now()}`);
+        const status = await verifyRes.json();
+
+        if (status.valid === true) {
+          // KEY-SHARING GUARD: Ensure token owner email matches registered device email
+          if (status.email && storedEmail && status.email.toLowerCase().trim() !== storedEmail.toLowerCase().trim()) {
+            alert("Security Alert: This access key belongs to a different registered student profile.");
+            clearAccessKey();
+            window.location.href = "key-gate.html";
+            return;
+          }
+
+          let finalValidTill = status.validTill;
+
+          // FIRST-ACTIVATION LIFESPAN LOCK: Read the browser's key-activation JSON cache
+          const keysCache = JSON.parse(localStorage.getItem('studywallah_keys_cache') || "{}");
+          
+          if (keysCache[storedKey]) {
+            // Key has been activated on this device before. Lock to its original first-activation lifespan!
+            finalValidTill = parseInt(keysCache[storedKey], 10);
+            
+            if (!isNaN(finalValidTill) && Date.now() > finalValidTill) {
+              alert("Verification Error: Your key access period has expired.");
+              clearAccessKey();
+              window.location.href = "key-gate.html";
+              return;
+            }
+          } else {
+            // First time seeing this key on this device. Calculate validity timestamp based on global settings config! [1, 2]
+            finalValidTill = Date.now() + (validityHours * 60 * 60 * 1000);
+            keysCache[storedKey] = finalValidTill;
+            localStorage.setItem('studywallah_keys_cache', JSON.stringify(keysCache));
+          }
+
+          localStorage.setItem('studywallah_valid_till', finalValidTill);
+          startTimerBadge(finalValidTill);
+        } else {
+          clearAccessKey();
+          window.location.href = "key-gate.html";
+        }
+      } catch (err) {
+        console.warn("Security gateway offline. Allowing local offline session fallback.");
+        if (validTillStr) {
+          const parsed = parseInt(validTillStr, 10);
+          if (!isNaN(parsed)) startTimerBadge(parsed);
+        }
+      }
+    }
+
+    // Expiry Countdown Badge Renderer
+    function startTimerBadge(validTillTimestamp) {
+      // Clear any pre-existing active intervals to prevent alternating/flickering text bugs
+      if (window.studywallah_timer_interval) {
+        clearInterval(window.studywallah_timer_interval);
+      }
+
+      if (isBatchesPage) {
+        // Render inside the Filter Panel (Bottom)
+        const checkExist = setInterval(function() {
+          const filterPanel = document.querySelector('.filter-panel');
+          if (filterPanel) {
+            clearInterval(checkExist);
+            
+            let badge = document.getElementById('key-timer-badge');
+            if (!badge) {
+              badge = document.createElement('div');
+              badge.id = 'key-timer-badge';
+              badge.style.cssText = "background: rgba(0, 82, 255, 0.04); border: 1px dashed rgba(0, 82, 255, 0.18); color: #0052FF; padding: 0.8rem 1.2rem; border-radius: 14px; font-size: 0.9rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 0.5rem;";
+              filterPanel.appendChild(badge);
+            }
+
+            function updateCountdown() {
+              const now = Date.now();
+              const diff = validTillTimestamp - now;
+
+              if (diff <= 0) {
+                clearInterval(window.studywallah_timer_interval);
+                clearAccessKey();
+                window.location.href = "key-gate.html";
+                return;
+              }
+
+              const hours = Math.floor(diff / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+              badge.innerHTML = `<i class="fa-regular fa-clock" style="color:#0052FF"></i> Key: ${hours}h ${minutes}m ${seconds}s`;
+            }
+
+            updateCountdown();
+            window.studywallah_timer_interval = setInterval(updateCountdown, 1000);
+          }
+        }, 100);
+      } else {
+        // Render next to dynamic navbar avatar (for all secondary pages)
+        const checkExist = setInterval(function() {
+          const avatar = document.getElementById('avatar-circle');
+          if (avatar) {
+            clearInterval(checkExist);
+            
+            let badge = document.getElementById('key-timer-badge');
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.id = 'key-timer-badge';
+              badge.style.cssText = "background: rgba(0, 82, 255, 0.08); color: #0052FF; border: 1px solid rgba(0, 82, 255, 0.15); padding: 0.4rem 0.9rem; border-radius: 50px; font-size: 0.78rem; font-weight: 800; margin-right: 12px; display: inline-flex; align-items: center; gap: 6px;";
+              avatar.parentNode.insertBefore(badge, avatar);
+            }
+
+            function updateCountdown() {
+              const now = Date.now();
+              const diff = validTillTimestamp - now;
+
+              if (diff <= 0) {
+                clearInterval(window.studywallah_timer_interval);
+                clearAccessKey();
+                window.location.href = "key-gate.html";
+                return;
+              }
+
+              const hours = Math.floor(diff / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+              badge.innerHTML = `<i class="fa-regular fa-clock" style="color:#0052FF"></i> Key: ${hours}h ${minutes}m ${seconds}s`;
+            }
+
+            updateCountdown();
+            window.studywallah_timer_interval = setInterval(updateCountdown, 1000);
+          }
+        }, 100);
+      }
+    }
+
+    verifyWithWorker();
+  })();
+</script>
+
+
+  <!-- Custom Alert Modal (Wait for Live notification) -->
+  <div id="live-modal" class="live-alert-overlay">
+    <div class="live-alert-modal">
+      <i class="fa-regular fa-clock modal-icon"></i>
+      <h3>Wait for Lecture Live</h3>
+      <p>This class is currently offline. Please wait for the classroom session to go live according to schedule.</p>
+      <button class="btn-modal-close" onclick="closeLiveModal()">Got It</button>
+    </div>
+  </div>
+
+  <!-- Sticky Header -->
+  <header>
+    <div class="nav-container">
+      <a href="batches.html" class="logo-container">
+        <img src="https://i.postimg.cc/zyKqr98Z/file-000000008b44720b8a8ec102c3a793cc-removebg-preview.png" alt="StudyWallah Logo" class="logo-img">
+        <span class="logo-text">StudyWallah</span>
+      </a>
+      <div class="user-avatar" id="avatar-circle">V</div>
+    </div>
+  </header>
+
+  <!-- Classroom Workspace Container -->
+  <main class="classroom-container">
+    
+    <!-- Slimmed billboard banner (Logo-Only) -->
+    <div id="billboard-container">
+        <div class="batch-banner-billboard-only">
+          <img src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/ec947628-7b9d-4c30-bbc4-c0c3e3db78a2.jpeg" class="billboard-logo-only" alt="Arjuna JEE 2027">
+        </div>
+      </div>
+
+    <!-- Horizontal Scheduled Lectures Area (Auto-Swipe Enabled) -->
+    <section class="lecture-schedule-section" id="schedule-section-wrap" style="display: none;">
+      <div class="schedule-header-wrapper">
+        <h3><i class="fa-solid fa-clock" style="color:var(--primary)"></i> Scheduled Live Lectures</h3>
+        <span class="swipe-indicator"><i class="fas fa-hand-pointer"></i> Swipe to see more</span>
+      </div>
+      <div class="scheduled-lectures-row" id="scheduled-row-container">
+        <!-- Generated Lecture Cards populate dynamically -->
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navbar">
+      <button class="workspace-tab active" id="tab-btn-orientation" onclick="switchTab('orientation')">Orientation</button>
+      <button class="workspace-tab" id="tab-btn-subjects" onclick="switchTab('subjects')">Subjects</button>
+      <button class="workspace-tab" id="tab-btn-announcements" onclick="switchTab('announcements')">Announcements</button>
+    </nav>
+
+    <!-- Workspace Panels -->
+    <!-- 1. Orientation Panel -->
+    <section class="workspace-panel active" id="panel-orientation">
+      <div class="orientation-grid">
+        <div class="about-card">
+          <h3>Course Details</h3>
+          <div class="about-html" id="batch-desc-area">
+
+
+  
+     <style>
+       .desc-container {
+         display: flex;
+         flex-direction: column;
+         padding: 16px 13px;
+       }
+       
+       .desc-row {
+         display: flex;
+         align-items: center;
+         margin-bottom: 16px;
+         border-bottom: 1px solid #efefef;
+         padding: 4px 0;
+       }
+       
+       .desc-row-item-title {
+         font-size: 14px;
+         line-height: 22px;
+         margin-right: 6px;
+       }
+
+       .desc-row-item-content {
+         font-size: 14px;
+         line-height: 18px;
+         margin-right: 6px;
+       }
+     </style>
+  
+
+  
+<div class="desc-container">
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">01.</span></div>
+<div class="desc-row-item-content"><strong>Live Lectures</strong>&nbsp;by 2 Set of Faculties &amp; Class&nbsp;Notes Will be provided.</div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">02. <strong>NCERT Punch Videos</strong><span style="font-weight: 400;"> &amp; <strong>DPPs Discussion by Batch Faculty</strong></span></span></div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;"><span style="font-size: 10pt;">03. <span style="font-weight: 400;"><strong>Digital Preparation KIT :</strong> </span><span style="font-weight: 400;"><br></span></span></span>
+<p><span style="font-size: 10pt;">A) Chapterwise Audio Summary &amp; Handwritten Notes<br>B) Chapterwise PYQ &amp; JEE Replica sheets (Main + Advanced) <br>C) Blueprints (Weightage analysis) &amp; Lecturewise Concise Notes<br>D) Digital Books<br></span></p>
+</div>
+<div class="desc-row-item-title">&nbsp;</div>
+<div class="desc-row-item-title">&nbsp;</div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">04.</span></div>
+<div class="desc-row-item-content"><strong>Scheduled tests &amp; AITS </strong><span style="font-weight: 400;">will be held according to the planner</span></div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">05. <strong>Revision Classes </strong><span style="font-weight: 400;">will be provided after syllabus completion</span></span></div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">06.</span></div>
+<div class="desc-row-item-content">Commitment Diary will be given after 20th March at the nearest VP / Pathshala Centre (first 1 lakh students only)</div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">07.</span></div>
+<div class="desc-row-item-content"><span style="font-weight: 400;">The complete course will be accessible to all students until </span><strong>JEE 2028 Exams</strong></div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">08.</span></div>
+<div class="desc-row-item-content">
+<div><span style="font-size: 10pt;">For App/Web Navigation the latest Feature Updates &amp; Student Support please subscribe to our Support YouTube channel:</span><br><span style="font-size: 10pt;"><a href="https://www.youtube.com/@pwstudentsupport" target="_blank" rel="noopener nofollow noreferrer">https://www.youtube.com/@pwstudentsupport</a></span></div>
+</div>
+</div>
+<div class="desc-row">
+<div class="desc-row-item-title"><span style="font-size: 10pt;">09.</span></div>
+<div class="desc-row-item-content">
+<div><span style="font-size: 10pt;">The registration fee is included in the price of the batch which is showing on the website. The breakup of registration fee will be mentioned on invoice. You may be provided with access to Notes, PYQâ€™s. Mock Test Papers, AITS Test Series, Previous year batches &amp; other materials, the access can vary depending on the batch you purchase, so that exact details might change from one batch to another.</span></div>
+</div>
+</div>
+</div>
+
+</div>
+        </div>
+        <div>
+          <h3 style="margin-bottom: 1.2rem;">Classroom Faculty</h3>
+          <div class="faculty-list" id="faculty-list-area"><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/a8a8837e-fa4d-4355-bbd5-214512154c23.png" alt="Rajwant Singh Sir">
+          <div>
+            <div class="faculty-name">Rajwant Singh Sir</div>
+            <div class="faculty-desc">B.tech- IIT(ISM) (10+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/c4994a81-8d4e-4225-826d-72339ab3610e.png" alt="Rahul Dudi Sir">
+          <div>
+            <div class="faculty-name">Rahul Dudi Sir</div>
+            <div class="faculty-desc">B.Tech from NIT Jaipur (11+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/ecc5f817-8b53-4e59-b58c-979c473e2315.png" alt="Kunwar Om Pandey Sir">
+          <div>
+            <div class="faculty-name">Kunwar Om Pandey Sir</div>
+            <div class="faculty-desc">M.Sc. - IIT Delhi (10+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/7ecbae73-2fda-4189-8f39-c8f71dff1110.png" alt="Sachin Jakhar Sir">
+          <div>
+            <div class="faculty-name">Sachin Jakhar Sir</div>
+            <div class="faculty-desc">B.Tech, NIT-KURUKSHETRA (12+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/0a398e4a-cbe6-4c10-9cb2-6cd6a5c8d891.png" alt="Amitabh Sharma Sir">
+          <div>
+            <div class="faculty-name">Amitabh Sharma Sir</div>
+            <div class="faculty-desc">M.Sc. from Kota University (22+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://d2bps9p1kiy4ka.cloudfront.net/5eb393ee95fab7468a79d189/6d43e0ff-3120-4bfd-8313-8060a026cbd3.png" alt="Ashutosh Gautam Sir">
+          <div>
+            <div class="faculty-name">Ashutosh Gautam Sir</div>
+            <div class="faculty-desc">M.Sc chemistry (13+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/540cf01e-f91a-4408-bf53-931b70fe8270.png" alt="Amarnath Anand Sir">
+          <div>
+            <div class="faculty-name">Amarnath Anand Sir</div>
+            <div class="faculty-desc">B.Tech from IIT Delhi (21+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/7b0810c2-b23a-463f-b8cc-3d22cdfc1cce.png" alt="Vijay Kumar Tripathi Sir">
+          <div>
+            <div class="faculty-name">Vijay Kumar Tripathi Sir</div>
+            <div class="faculty-desc">B.Tech from IIT BHU (10+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/deed3f9e-6911-4893-b3f3-9e51c0bbcefa.png" alt="Varun Chauhan Sir">
+          <div>
+            <div class="faculty-name">Varun Chauhan Sir</div>
+            <div class="faculty-desc">B.Tech (10+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/c4de34da-84f8-4a89-960a-dbdec7122b07.png" alt="Pankaj Sijariya Sir">
+          <div>
+            <div class="faculty-name">Pankaj Sijariya Sir</div>
+            <div class="faculty-desc">B.Tech from HBTI kanpur (16+ Yrs Exp)</div>
+          </div>
+        </div><div class="faculty-card">
+          <img class="faculty-img" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/60062667-872c-4451-b40a-36cc36e1b7b3.png" alt="Saleem Ahmad Sir">
+          <div>
+            <div class="faculty-name">Saleem Ahmad Sir</div>
+            <div class="faculty-desc">Electronics and Communications Engineer from NIT (12+ Yrs Exp)</div>
+          </div>
+        </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Subjects Panel -->
+    <section class="workspace-panel" id="panel-subjects">
+      <div class="subjects-grid" id="subjects-grid-area"><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Physics By Rajwant Singh Sir</div>
+          <div class="subject-teacher">Rajwant Singh Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 40 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Physical Chemistry By Rahul Dudi Sir</div>
+          <div class="subject-teacher">Rahul Dudi Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 49 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Inorganic Chemistry By Kunwar Om Pandey Sir</div>
+          <div class="subject-teacher">Kunwar Om Pandey Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 0 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Maths By Sachin Jakhar Sir</div>
+          <div class="subject-teacher">Sachin Jakhar Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 37 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <div class="subject-title">Notices</div>
+          <div class="subject-teacher">Global Broadcast Announcements</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 23 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Inorganic Chemistry By Amitabh Sharma Sir</div>
+          <div class="subject-teacher">Amitabh Sharma Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 0 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Organic Chemistry by Ashutosh Gautam Sir</div>
+          <div class="subject-teacher">Ashutosh Gautam Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 0 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Maths by Amarnath Anand Sir (Anna Sir)</div>
+          <div class="subject-teacher">Amarnath Anand Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 34 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Physical Chemistry by Vijay kumar Tripathi Sir (VKT Sir)</div>
+          <div class="subject-teacher">Vijay Kumar Tripathi Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 34 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Physics by Varun Chauhan sir</div>
+          <div class="subject-teacher">Varun Chauhan Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 33 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Organic Chemistry By Pankaj Sijariya Sir</div>
+          <div class="subject-teacher">Pankaj Sijariya Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 1 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div><div class="subject-card">
+          <div class="subject-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="subject-title">Physics By Saleem Ahmad Sir (Recorded)</div>
+          <div class="subject-teacher">Saleem Ahmad Sir</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> 227 Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes &amp; DPPs</span>
+          </div>
+        </div></div>
+    </section>
+
+    <!-- 3. Announcements Panel -->
+    <section class="workspace-panel" id="panel-announcements">
+      <div class="announcements-feed" id="announcements-feed-area"><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 12, 2026</div>
+            </div>
+            <div class="announcement-title">Concise Summary Notes Update</div>
+            <div class="announcement-body">Concise Summary Notes Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/c2ed8e2e-e4ac-4b82-b54b-a4f68d607468.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 12, 2026</div>
+            </div>
+            <div class="announcement-title">Important Announcement</div>
+            <div class="announcement-body">YouTube à¤ªà¥‡ à¤¯à¥‡ laga dalaâ€¦padhai full jingalala
+https://pi-lens.onelink.me/4jfH/gua9ax91</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/7d7cf54c-09f3-4597-8dde-890f7e456dba.jpeg" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 11, 2026</div>
+            </div>
+            <div class="announcement-title">Maths DPP Solution Update</div>
+            <div class="announcement-body">Maths DPP Solution Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/5823fffe-98c1-4148-b243-abd2f2adca7e.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 11, 2026</div>
+            </div>
+            <div class="announcement-title">Extra Books PDF Update</div>
+            <div class="announcement-body">Physics Extra Books PDF Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/4c3bfd7c-74c3-47bd-89a0-ab0a5d5e349a.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 11, 2026</div>
+            </div>
+            <div class="announcement-title">Concise Summary Notes Update</div>
+            <div class="announcement-body">Concise Summary Notes Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/159cbbd9-6a33-46c9-8a58-d0809c3f89b8.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 11, 2026</div>
+            </div>
+            <div class="announcement-title">Maths DIBY PDF Update</div>
+            <div class="announcement-body">DIBY By Sachin Sir</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/e3c82c81-4e0c-4dad-8eaa-ac8ba765ff36.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 10, 2026</div>
+            </div>
+            <div class="announcement-title">Maths DPP Solution Update</div>
+            <div class="announcement-body">Maths DPP Solution Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/9d256bd2-b71b-4adb-859c-325b45c1748a.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 10, 2026</div>
+            </div>
+            <div class="announcement-title">Extra Books PDF Update</div>
+            <div class="announcement-body">Physics Extra Books PDF Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/6e6cc863-98ac-4de4-956d-521e98e21045.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 10, 2026</div>
+            </div>
+            <div class="announcement-title">Concise Summary Notes Update</div>
+            <div class="announcement-body">Concise Summary Notes Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/4715ff8a-3a2c-4130-b45c-150bd2600113.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 10, 2026</div>
+            </div>
+            <div class="announcement-title">Smart Test</div>
+            <div class="announcement-body">ðŸŽ¯ Smart Test Takers always check the syllabus and instructions before rating. 
+Please review the shared guidelines once and give fair, thoughtful feedback.</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/9188f3ea-302c-4680-8f1d-c4c95f52f928.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 10, 2026</div>
+            </div>
+            <div class="announcement-title">Class Cancel Update</div>
+            <div class="announcement-body">Due to some issue, the class scheduled on 07:15 PM has been cancelled.</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/4643a303-f4d2-453f-acd1-39461e723b93.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 9, 2026</div>
+            </div>
+            <div class="announcement-title">Interaction Session  Update</div>
+            <div class="announcement-body">Interaction Session Rescheduled</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/30dfc99f-6798-4d26-84c8-0199c6d6743d.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 9, 2026</div>
+            </div>
+            <div class="announcement-title">Concise Summary Notes Update</div>
+            <div class="announcement-body">Concise Summary Notes Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/a79b4d8a-26d5-4fe2-b113-e3333c48a00d.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 9, 2026</div>
+            </div>
+            <div class="announcement-title">Important Announcement</div>
+            <div class="announcement-body">ðŸš€ ARJUNA JEE 2027 WHATSAPP channel ðŸš€ 
+Hello Baccho ðŸ‘‹
+Important updates ðŸ“¢, guidance âœ¨ &amp; all announcements ke liye abhi WhatsApp group join karo ðŸ”¥
+ðŸ”— Join Now:
+https://whatsapp.com/channel/0029VbCSxSiHltYAvlPcOC1z
+âœ… Stay updated &amp; donâ€™t miss anything!</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/17cbbaef-fce5-4053-8fe8-d53ddfa2cde1.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 9, 2026</div>
+            </div>
+            <div class="announcement-title">New Chapter Update</div>
+            <div class="announcement-body">Maths New Chapter Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/35c26c2b-4917-49b4-89ca-65c6c919cdce.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 8, 2026</div>
+            </div>
+            <div class="announcement-title">Live Interaction Session</div>
+            <div class="announcement-body">Live Interaction Session By Kunwar Om Pandey Sir</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/64f5efae-c653-4d92-9dad-88718fcae339.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 8, 2026</div>
+            </div>
+            <div class="announcement-title">Maths DPP Solution Update</div>
+            <div class="announcement-body">Maths DPP Solution Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/a04fa61f-af63-4436-8a0d-c2e927112476.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 8, 2026</div>
+            </div>
+            <div class="announcement-title">Extra Recorded Class Update</div>
+            <div class="announcement-body">Maths Extra Recorded Class Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/feb5f1f6-b0d6-42ce-96c7-69d1abcd8676.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 8, 2026</div>
+            </div>
+            <div class="announcement-title">Extra Books PDF Update</div>
+            <div class="announcement-body">Physics Extra Books PDF Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/375a3e31-a30d-4b36-ac96-7231a8e0e36f.png" alt="Announcement Image Attachment">
+            
+          </div><div class="announcement-card">
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">Jun 8, 2026</div>
+            </div>
+            <div class="announcement-title">Concise Summary Notes Update</div>
+            <div class="announcement-body">Concise Summary Notes Update</div>
+            
+            <!-- Direct inline image loader -->
+            
+              <img class="announcement-img-inline" src="https://static.pw.live/5eb393ee95fab7468a79d189/ADMIN/0e601b99-27f8-4a7f-beb4-5305e939d6d4.png" alt="Announcement Image Attachment">
+            
+          </div></div>
+    </section>
+
+  </main>
+
+  <script>
+    const DECRYPTION_KEY = "tu-hai-bsdk";
+    const BATCH_ID = new URLSearchParams(window.location.search).get('id') || "698ad3519549b300a5e1cc6a";
+
+    // API Gateways
+    const BATCH_DETAIL_PRIMARY = `https://studywallah-01.dushahnawaz786.workers.dev/batchdetail/${BATCH_ID}`;
+    const BATCH_DETAIL_SECONDARY = `https://studywallah-api.vercel.app/batches/${BATCH_ID}/details`;
+
+    const LIVE_LECTURES_PRIMARY = `https://studywallah-01.dushahnawaz786.workers.dev/live/${BATCH_ID}`;
+    const LIVE_LECTURES_SECONDARY = `https://studywallah-api.vercel.app/batches/${BATCH_ID}/todays-schedule`;
+
+    const ANNOUNCEMENTS_API = `https://studywallah-01.dushahnawaz786.workers.dev/announcement/${BATCH_ID}`;
+
+    let batchData = null;
+
+    // Cookie Helper
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+      return null;
+    }
+    
+    function checkRegistrationGuard() {
+      const name = getCookie('studywallah_user_name');
+      const email = getCookie('studywallah_user_email');
+      
+      if (!name || !email) {
+        window.location.href = "batches.html";
+        return false;
+      }
+
+      // Live verification block checking the central status database
+      const users = JSON.parse(localStorage.getItem('studywallah_users_list') || "[]");
+      const match = users.find(u => u.email === email);
+      if (match && match.banned) {
+        alert("Your account has been banned by the administrator.");
+        document.cookie = "studywallah_user_name=; Max-Age=-99999999; path=/; SameSite=Strict; Secure";
+        document.cookie = "studywallah_user_email=; Max-Age=-99999999; path=/; SameSite=Strict; Secure";
+        window.location.href = "batches.html";
+        return false;
+      }
+      return true;
+    }
+
+    function initUserHeader() {
+      const name = getCookie('studywallah_user_name') || "Student";
+      document.getElementById('avatar-circle').textContent = name.charAt(0).toUpperCase();
+    }
+
+    // Dynamic AES-GCM Decrypter supporting both Hex-colon strings and Base64 JSON objects
+    async function decryptData(encryptedInput, keyString = DECRYPTION_KEY) {
+      try {
+        let iv, encryptedBytes;
+
+        // Parse stringified JSON if needed
+        let dataObj = encryptedInput;
+        if (typeof encryptedInput === 'string') {
+          try {
+            dataObj = JSON.parse(encryptedInput);
+          } catch (e) {
+            dataObj = null;
+          }
+        }
+
+        if (dataObj && dataObj.iv && dataObj.ciphertext) {
+          // Format B: Base64 JSON object (Secondary API)
+          const base64ToUint8 = b64 => {
+            const binaryString = atob(b64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
+          };
+          iv = base64ToUint8(dataObj.iv);
+          encryptedBytes = base64ToUint8(dataObj.ciphertext);
+        } else if (typeof encryptedInput === 'string') {
+          // Format A: Hex string "iv:ciphertext" (Primary API)
+          const parts = encryptedInput.split(':');
+          if (parts.length !== 2) throw new Error("Invalid encrypted string format");
+          const hexToUint8 = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+          iv = hexToUint8(parts[0]);
+          encryptedBytes = hexToUint8(parts[1]);
+        } else {
+          throw new Error("Unsupported encrypted data format");
+        }
+
+        const encoder = new TextEncoder();
+        const keyData = encoder.encode(keyString);
+        const keyHash = await crypto.subtle.digest('SHA-256', keyData);
+        
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw', keyHash, { name: 'AES-GCM' }, false, ['decrypt']
+        );
+        
+        const decryptedBuffer = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: iv }, cryptoKey, encryptedBytes
+        );
+        
+        const decoder = new TextDecoder();
+        return JSON.parse(decoder.decode(decryptedBuffer));
+      } catch (error) {
+        console.warn("Decryption attempt bypassed or failed:", error);
+        try {
+          return typeof encryptedInput === 'string' ? JSON.parse(encryptedInput) : encryptedInput;
+        } catch(e) {
+          throw error;
+        }
+      }
+    }
+
+    // Dynamic Teacher Cross-Referencing
+    function getTeacherInfo(teacherId) {
+      if (!batchData || !batchData.subjects) return null;
+      for (let sub of batchData.subjects) {
+        if (sub.teacherIds) {
+          const matched = sub.teacherIds.find(t => t._id === teacherId || t.profileId === teacherId);
+          if (matched) return matched;
+        }
+      }
+      return null;
+    }
+
+    // Helper to format dynamic UTC startTime strings to standard 12-hour AM/PM and calendar date
+    function formatLectureTime(timeStr) {
+      if (!timeStr) return "N/A";
+      try {
+        const date = new Date(timeStr);
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // conversion of 0 to 12
+        const formattedTime = `${hours}:${minutes} ${ampm}`;
+        
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const formattedDate = `${date.getDate().toString().padStart(2, '0')} ${monthNames[date.getMonth()]}`;
+        
+        return `${formattedTime} Ã¢Â€Â¢ ${formattedDate}`;
+      } catch (e) {
+        return timeStr;
+      }
+    }
+
+    // Fetch batch detail API with resilient fallback parsing
+    async function initClassroom() {
+      try {
+        let rawJson = null;
+
+        // Try Primary API first
+        try {
+          console.log("Fetching batch details from Primary API...");
+          const res = await fetch(BATCH_DETAIL_PRIMARY);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          rawJson = await res.json();
+        } catch (primaryErr) {
+          console.warn("Primary batch details failed, trying Secondary...", primaryErr);
+          // Fallback to Secondary API [2]
+          try {
+            const res = await fetch(BATCH_DETAIL_SECONDARY);
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            rawJson = await res.json();
+          } catch (secondaryErr) {
+            console.error("Secondary batch details also failed:", secondaryErr);
+          }
+        }
+
+        if (!rawJson) throw new Error("Could not fetch batch details from any API source.");
+
+        let targetData = null;
+        if (rawJson.iv && rawJson.ciphertext) {
+          targetData = await decryptData(rawJson);
+        } else if (rawJson.data) {
+          targetData = await decryptData(rawJson.data);
+        } else {
+          targetData = rawJson;
+        }
+        
+        batchData = targetData.data || targetData;
+        renderBillboard();
+        renderOrientation();
+        renderSubjects();
+        
+        // Load dependent listings asynchronously
+        fetchLiveLectures();
+        fetchAnnouncements();
+      } catch (err) {
+        console.error("Error setting up classroom:", err);
+      }
+    }
+
+    // Renders Billboard showing Logo Only within a Structured Rectangular Frame
+    function renderBillboard() {
+      const wrapper = document.getElementById('billboard-container');
+      const logoUrl = batchData.previewImage ? (batchData.previewImage.baseUrl ? (batchData.previewImage.baseUrl + batchData.previewImage.key) : batchData.previewImage) : 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb';
+
+      wrapper.innerHTML = `
+        <div class="batch-banner-billboard-only">
+          <img src="${logoUrl}" class="billboard-logo-only" alt="${batchData.name}">
+        </div>
+      `;
+    }
+
+    // Tab switcher
+    function switchTab(tabName) {
+      const tabs = ['orientation', 'subjects', 'announcements'];
+      tabs.forEach(tab => {
+        const btn = document.getElementById(`tab-btn-${tab}`);
+        const panel = document.getElementById(`panel-${tab}`);
+        if (tab === tabName) {
+          btn.classList.add('active');
+          panel.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          panel.classList.remove('active');
+        }
+      });
+    }
+
+    // 1. Render orientation
+    function renderOrientation() {
+      document.getElementById('batch-desc-area').innerHTML = batchData.description || "Course Details Not Specified.";
+      
+      const facultyArea = document.getElementById('faculty-list-area');
+      facultyArea.innerHTML = "";
+      
+      const teacherMap = new Map();
+      if (batchData.subjects) {
+        batchData.subjects.forEach(subject => {
+          if (subject.teacherIds) {
+            subject.teacherIds.forEach(teacher => {
+              teacherMap.set(teacher._id, teacher);
+            });
+          }
+        });
+      }
+
+      if (teacherMap.size === 0) {
+        facultyArea.innerHTML = "<p style='color: var(--text-secondary); font-size:0.9rem;'>Faculty list is updating.</p>";
+        return;
+      }
+
+      teacherMap.forEach(teacher => {
+        const teacherCard = document.createElement('div');
+        teacherCard.className = "faculty-card";
+        const avatarSrc = teacher.imageId ? (teacher.imageId.baseUrl + teacher.imageId.key) : "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2";
+        
+        teacherCard.innerHTML = `
+          <img class="faculty-img" src="${avatarSrc}" alt="${teacher.firstName} ${teacher.lastName || ''}">
+          <div>
+            <div class="faculty-name">${teacher.firstName} ${teacher.lastName || ''}</div>
+            <div class="faculty-desc">${teacher.qualification || 'Senior Educator'} (${teacher.experience || '10'}+ Yrs Exp)</div>
+          </div>
+        `;
+        facultyArea.appendChild(teacherCard);
+      });
+    }
+
+    // 2. Render subjects list
+    function renderSubjects() {
+      const grid = document.getElementById('subjects-grid-area');
+      grid.innerHTML = "";
+
+      if (!batchData.subjects || batchData.subjects.length === 0) {
+        grid.innerHTML = "<p>No active classrooms associated with this batch.</p>";
+        return;
+      }
+
+      batchData.subjects.forEach(subject => {
+        const isNotices = subject.subject.toLowerCase().includes("notice") || subject.isResources;
+        
+        const card = document.createElement('div');
+        card.className = "subject-card";
+        card.onclick = () => {
+          window.location.href = `topic.html?batchId=${BATCH_ID}&subjectId=${subject._id}&slug=${subject.slug}`;
+        };
+
+        const teacherName = subject.teacherIds && subject.teacherIds.length > 0 
+          ? (subject.teacherIds[0].firstName + " " + (subject.teacherIds[0].lastName || "")) 
+          : "Class Facilitator";
+
+        card.innerHTML = `
+          <div class="subject-icon">
+            <i class="${isNotices ? 'fa-solid fa-bullhorn' : 'fa-solid fa-book-open'}"></i>
+          </div>
+          <div class="subject-title">${subject.subject}</div>
+          <div class="subject-teacher">${isNotices ? 'Global Broadcast Announcements' : teacherName}</div>
+          <div class="subject-foot">
+            <span><i class="fa-solid fa-video"></i> ${subject.lectureCount || 0} Lectures</span>
+            <span><i class="fa-solid fa-file-pdf"></i> Notes & DPPs</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // 3. Render Live / Scheduled Lectures Row with fallback and standardized mapping
+    async function fetchLiveLectures() {
+      try {
+        let rawJson = null;
+
+        // Try Primary API first
+        try {
+          console.log("Fetching live lectures from Primary API...");
+          const res = await fetch(LIVE_LECTURES_PRIMARY);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          rawJson = await res.json();
+        } catch (primaryErr) {
+          console.warn("Primary live lectures failed, trying Secondary...", primaryErr);
+          // Fallback to Secondary API [3]
+          try {
+            const res = await fetch(LIVE_LECTURES_SECONDARY);
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            rawJson = await res.json();
+          } catch (secondaryErr) {
+            console.error("Secondary live lectures also failed:", secondaryErr);
+          }
+        }
+
+        if (!rawJson) return;
+
+        let liveData = null;
+        if (rawJson.iv && rawJson.ciphertext) {
+          liveData = await decryptData(rawJson);
+        } else if (rawJson.data) {
+          liveData = await decryptData(rawJson.data);
+        } else {
+          liveData = rawJson;
+        }
+
+        // Standardize the nested array structures across primary and secondary schemas [3]
+        let rawArray = [];
+        if (Array.isArray(liveData)) {
+          rawArray = liveData;
+        } else if (liveData && liveData.data) {
+          if (Array.isArray(liveData.data)) {
+            rawArray = liveData.data;
+          } else if (liveData.data.data && Array.isArray(liveData.data.data)) {
+            rawArray = liveData.data.data;
+          }
+        }
+
+        // Normalize lecture properties into a uniform format
+        const activeLectures = rawArray.map(item => {
+          const target = (item && item.data && typeof item.data === 'object' && !Array.isArray(item.data)) ? item.data : item;
+          return {
+            _id: target._id || item._id || "",
+            startTime: target.startTime || "",
+            endTime: target.endTime || "",
+            batchSubjectId: target.batchSubjectId || "",
+            teachers: target.teachers || [],
+            topic: target.topic || "",
+            subjectId: target.subjectId || { name: "Classroom Session" },
+            status: target.status || "PENDING"
+          };
+        });
+
+        const container = document.getElementById('scheduled-row-container');
+        const sectionWrap = document.getElementById('schedule-section-wrap');
+        
+        container.innerHTML = "";
+
+        if (activeLectures.length > 0) {
+          sectionWrap.style.display = "block";
+          
+          activeLectures.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "scheduled-card";
+
+            // Determine if the scheduled start time has arrived
+            const now = Date.now();
+            const start = new Date(item.startTime).getTime();
+            const isTimeDone = now >= start;
+
+            let badgeText = "COMPLETED";
+            let badgeClass = "ended";
+
+            if (item.status === "PENDING") {
+              if (isTimeDone) {
+                badgeText = "LIVE NOW";
+                badgeClass = "live";
+              } else {
+                badgeText = "SCHEDULED";
+                badgeClass = "scheduled";
+              }
+            }
+
+            // Resolve teacher face portrait details
+            let teacherImg = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2";
+            let teacherName = "Class Instructor";
+            
+            if (item.teachers && item.teachers.length > 0) {
+              const matchedTeacher = getTeacherInfo(item.teachers[0]);
+              if (matchedTeacher) {
+                teacherName = matchedTeacher.firstName + " " + (matchedTeacher.lastName || "");
+                if (matchedTeacher.imageId) {
+                  teacherImg = matchedTeacher.imageId.baseUrl + matchedTeacher.imageId.key;
+                }
+              }
+            }
+
+            card.innerHTML = `
+              <div class="scheduled-header-row">
+                <span class="badge-status ${badgeClass}">${badgeText}</span>
+              </div>
+              
+              <img src="${teacherImg}" alt="${teacherName}" class="teacher-portrait-big">
+              <span class="teacher-name-big">${teacherName}</span>
+              
+              <div class="lecture-time-badge">
+                <i class="fa-regular fa-clock"></i> ${formatLectureTime(item.startTime)}
+              </div>
+              
+              <div class="lecture-topic-title">${item.subjectId.name} : ${item.topic}</div>
+              
+              <button class="btn-lecture-action" onclick="handleLectureClick('${item.status}', '${item.startTime}', '${item.batchSubjectId}', '${item._id}', event)">
+                ${item.status === "PENDING" && !isTimeDone ? '<i class="fas fa-play"></i> Watch Live' : '<i class="fas fa-circle-play"></i> Watch Session'}
+              </button>
+            `;
+            container.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.warn("Exception checking live scheduling metrics:", err);
+      }
+    }
+
+    // Handles live status checks on clicks
+    // Handles status validation and redirects to live.html when appropriate
+// Handles status and time validation to allow immediate access once time has arrived
+    function handleLectureClick(status, startTime, subjectId, contentId, event) {
+      event.preventDefault();
+      
+      const now = Date.now();
+      const start = new Date(startTime).getTime();
+      const isTimeDone = now >= start; // Checks if current time is past scheduled time
+
+      if (status === "PENDING" && !isTimeDone) {
+        // Block only if the lecture is pending AND the scheduled time has NOT arrived yet
+        document.getElementById('live-modal').style.display = "flex";
+      } else {
+        // Redirect directly if time has arrived (even if status is still PENDING) or completed
+        window.location.href = `live.html?BatchId=${BATCH_ID}&SubjectId=${subjectId}&ContentId=${contentId}`;
+      }
+    }
+    window.handleLectureClick = handleLectureClick;
+
+// Expose the updated function globally to prevent scope issues
+window.handleLectureClick = handleLectureClick;
+
+    function closeLiveModal() {
+      document.getElementById('live-modal').style.display = "none";
+    }
+
+    // 4. Render Announcements & Direct Inline Image Parsing (Fixed Data Mapping)
+    async function fetchAnnouncements() {
+      try {
+        const res = await fetch(ANNOUNCEMENTS_API);
+        const rawJson = await res.json();
+        
+        let list = [];
+        if (rawJson.data) {
+          const decryptedObj = await decryptData(rawJson.data);
+          list = decryptedObj.data || decryptedObj || [];
+        } else if (rawJson.announcements) {
+          list = rawJson.announcements;
+        }
+
+        if (!Array.isArray(list)) list = [];
+
+        const localAnnouncements = JSON.parse(localStorage.getItem(`studywallah_announcements_${BATCH_ID}`) || "[]");
+        const combined = [...localAnnouncements, ...list];
+
+        const container = document.getElementById('announcements-feed-area');
+        container.innerHTML = "";
+
+        if (combined.length === 0) {
+          container.innerHTML = "<p style='color: var(--text-secondary); text-align: center; padding: 2rem;'>No announcements published yet.</p>";
+          return;
+        }
+
+        combined.forEach(item => {
+          const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "Just Now";
+          const card = document.createElement('div');
+          card.className = "announcement-card";
+
+          // Parse direct image display logic
+          const hasAttachment = item.attachment && item.attachment.baseUrl && item.attachment.key;
+          const attachmentUrl = hasAttachment ? (item.attachment.baseUrl + item.attachment.key) : "";
+
+          card.innerHTML = `
+            <div class="announcement-header">
+              <div class="announcement-author">
+                <span><i class="fa-solid fa-circle-user"></i> StudyWallah Coordinator</span>
+              </div>
+              <div class="announcement-date">${dateStr}</div>
+            </div>
+            <div class="announcement-title">${item.heading || "Batch Classroom Update"}</div>
+            <div class="announcement-body">${item.announcement || "Standard notification update."}</div>
+            
+            <!-- Direct inline image loader -->
+            ${hasAttachment ? `
+              <img class="announcement-img-inline" src="${attachmentUrl}" alt="Announcement Image Attachment">
+            ` : ''}
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.warn("Announcements pipeline fallback initiated.", err);
+      }
+    }
+
+    // Expose helpers globally
+    window.switchTab = switchTab;
+    window.handleLectureClick = handleLectureClick;
+    window.closeLiveModal = closeLiveModal;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initUserHeader();
+      initClassroom();
+    });
+  </script>
+
+
+
+</body></html>
