@@ -2,50 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DevCoderZ Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Lecture Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <style>
     body { margin: 0; background: #000; }
-    .video-container { width: 100%; position: relative; }
-    .menu { position: absolute; bottom: 60px; right: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; border: 1px solid #333; z-index: 1000; color: #fff; font-size: 12px; }
-    .menu label { display: block; margin: 10px 0 5px; color: #0ea5e9; }
-    .menu select { width: 100%; background: #000; color: #fff; border: 1px solid #444; padding: 5px; }
+    .video-container { width: 100%; height: 100dvh; position: relative; }
+    video { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
   <div class="video-container">
-    <video id="lecture-player" playsinline controls>
-      <source src="YOUR_VIDEO_URL_HERE" type="application/x-mpegURL">
-    </video>
-    <div class="menu" id="setMenu">
-      <label>Quality</label>
-      <select id="qualityList"><option value="auto">Auto</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option></select>
-      <label>Speed</label>
-      <select id="speedList" onchange="document.getElementById('lecture-player').playbackRate = this.value">
-        <option value="0.5">0.5x</option><option value="1" selected>Normal</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option>
-      </select>
-    </div>
+    <video id="lecture-player" playsinline controls></video>
   </div>
+
   <script>
     const player = new Plyr('#lecture-player', {
       controls: ['rewind', 'play', 'volume', 'fast-forward', 'progress', 'current-time', 'duration', 'download', 'settings', 'fullscreen'],
-      settings: ['quality', 'speed']
+      settings: ['quality', 'speed'],
+      quality: { default: 720, options: [720, 480, 360, 240] },
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3] }
     });
+
     player.on('ready', () => {
       const downloadBtn = document.querySelector('[data-plyr="download"]');
       downloadBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = `download.html?url=${encodeURIComponent(player.source)}`;
+        window.location.href = `download.html?url=${encodeURIComponent(player.media.currentSrc)}`;
       });
     });
+
     player.on('enterfullscreen', async () => {
       if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
     });
+
     player.on('exitfullscreen', () => {
       if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
     });
   </script>
+  <script src="/PW/player.js"></script>
 </body>
 </html>
