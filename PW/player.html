@@ -4,38 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DevCoderZ Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
   <style>
     :root { --accent: #0ea5e9; --accentl: #7dd3fc; }
     body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
     #player-container { width: 100vw; height: 100vh; position: relative; }
-    video { width: 100%; height: 100%; object-fit: contain; }
+    video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
-    /* Branding */
     .branding { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
     .b1 { font-size: 10px; font-weight: 800; color: var(--accentl); text-transform: uppercase; }
     .b2 { font-size: 8px; color: #aaa; }
 
-    /* Controls Container - Fixed */
-    .controls-wrapper { 
-      position: absolute; bottom: 0; width: 100%; padding: 20px; 
-      background: linear-gradient(transparent, #000); 
-      z-index: 100; transition: opacity 0.3s; 
-    }
+    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); z-index: 100; transition: opacity 0.3s; }
     .hidden { opacity: 0; pointer-events: none; }
 
-    /* Progress Bar */
     .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 12px; font-family: monospace; }
     .progress-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.2); cursor: pointer; position: relative; border-radius: 3px; }
     .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
     .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; }
-    
-    /* Buttons Row */
+
     .btn-row { display: flex; gap: 15px; align-items: center; }
-    .btn { cursor: pointer; font-size: 20px; padding: 5px; color: white; }
+    .btn { cursor: pointer; font-size: 20px; padding: 5px; }
     #play.playing::before { content: "❚❚"; }
     #play::before { content: "▶"; }
-
-    /* Settings Menu */
+    
     .menu { position: absolute; bottom: 70px; right: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; border: 1px solid #333; z-index: 150; }
   </style>
 </head>
@@ -63,8 +55,8 @@
       <div class="btn" id="play" onclick="togglePlay()"></div>
       <div class="btn" onclick="seek(10)">⏩</div>
       <div class="btn" onclick="toggleFS()">⛶</div>
-      <div class="btn" onclick="download()">⬇️</div>
-      <div class="btn" id="settingsBtn" onclick="toggleMenu()">⚙️</div>
+      <div class="btn" onclick="window.location.href=video.src">⬇️</div>
+      <div class="btn" onclick="toggleMenu()">⚙️</div>
     </div>
   </div>
 
@@ -77,30 +69,43 @@
 </div>
 
 <script>
-  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), menu = document.getElementById('setMenu'), playBtn = document.getElementById('play');
+  const video = document.getElementById('video');
+  const ctrls = document.getElementById('ctrls');
+  const menu = document.getElementById('setMenu');
+  const playBtn = document.getElementById('play');
+
+  // Initialization
+  async function initPlayer() {
+    const player = new shaka.Player(video);
+    // Agar player.js mein koi global init function hai to use call karein
+    if (typeof window.startPlayer === 'function') {
+        window.startPlayer(player, video);
+    }
+  }
+  
+  // Script load hote hi init run karo
+  document.addEventListener('DOMContentLoaded', initPlayer);
 
   function togglePlay() {
     if(video.paused) { video.play(); playBtn.classList.add('playing'); }
     else { video.pause(); playBtn.classList.remove('playing'); }
   }
+  
   function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
   function toggleMenu() { menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; }
   function seek(s) { video.currentTime += s; }
-  function download() { window.location.href = video.src; }
 
-  // Click handler to show/hide
   document.getElementById('player-container').onclick = (e) => {
     if(menu.style.display === 'block') { menu.style.display = 'none'; return; }
     if(!e.target.closest('.controls-wrapper')) ctrls.classList.toggle('hidden');
   };
 
-  // Timer logic
-  function fmt(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
   video.ontimeupdate = () => {
     document.getElementById('progressPlayed').style.width = (video.currentTime / video.duration) * 100 + '%';
-    document.getElementById('cur').innerText = fmt(video.currentTime);
-    document.getElementById('dur').innerText = fmt(video.duration || 0);
+    document.getElementById('cur').innerText = new Date(video.currentTime * 1000).toISOString().substr(11, 8);
+    document.getElementById('dur').innerText = new Date((video.duration || 0) * 1000).toISOString().substr(11, 8);
   };
 </script>
+<script src="/PW/player.js"></script>
 </body>
 </html>
