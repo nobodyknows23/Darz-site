@@ -2,50 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>The DevCoderZ Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Lecture Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
   <style>
-    :root { --plyr-color-main: #0ea5e9; }
-    body { margin: 0; background: #000; overflow: hidden; }
-    .video-container { width: 100vw; height: 100dvh; position: relative; display: flex; align-items: center; justify-content: center; }
-    .branding { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-    .b1 { font-size: 12px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; }
-    .b2 { font-size: 9px; color: #aaa; margin-top: 2px; }
-    .custom-seek { position: absolute; bottom: 80px; width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 10; }
-    .seek-btn { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; backdrop-filter: blur(5px); }
+    body { margin: 0; background: #000; }
+    .video-container { width: 100%; height: 100dvh; position: relative; }
+    video { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
-
   <div class="video-container">
-    <div class="branding">
-      <div class="b1">THE DEVCODERZ</div>
-      <div class="b2">Developed by Devansh Sharma</div>
-    </div>
-
-    <div class="custom-seek">
-      <button class="seek-btn" onclick="player.rewind(10)">⟲ 10s</button>
-      <button class="seek-btn" onclick="player.forward(10)">10s ⟳</button>
-    </div>
-
-    <video id="lecture-player" playsinline controls>
-      <source src="" type="application/x-mpegURL">
-    </video>
+    <video id="lecture-player" playsinline controls></video>
   </div>
 
   <script>
     const player = new Plyr('#lecture-player', {
-      controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'download', 'settings', 'fullscreen'],
+      controls: ['rewind', 'play', 'volume', 'fast-forward', 'progress', 'current-time', 'duration', 'download', 'settings', 'fullscreen'],
       settings: ['quality', 'speed'],
       quality: { default: 720, options: [720, 480, 360, 240] },
-      speed: { selected: 1, options: [0.5, 1, 1.5, 2, 3] }
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3] }
     });
 
     player.on('ready', () => {
-      document.querySelector('[data-plyr="download"]').addEventListener('click', (e) => {
+      const downloadBtn = document.querySelector('[data-plyr="download"]');
+      downloadBtn.addEventListener('click', (e) => {
         e.preventDefault();
         window.location.href = `download.html?url=${encodeURIComponent(player.media.currentSrc)}`;
       });
@@ -61,4 +43,4 @@
   </script>
   <script src="/PW/player.js"></script>
 </body>
-</html> 
+</html>
