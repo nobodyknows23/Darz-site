@@ -1,5 +1,5 @@
 Const CONFIG = {
-  BASE_API: "https://mtaiirus-api.onrender.com",
+  BASE_API: "https://apiserver.detlastudy.site",
 
   REQUIRE_DELTA_KEY: false,
   DELTA_ACCESS_KEY: "delta-access-key",
