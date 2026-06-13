@@ -14,7 +14,9 @@
         }
         .subject_card img { width: 50px; height: 50px; object-fit: contain; }
         .subject-title { font-size: 14px; font-weight: 700; color: #111; line-height: 1.2; }
+        .teacher-name { font-size: 12px; color: #4f46e5; font-weight: 600; margin-top: 2px; }
         .lecture-count { font-size: 11px; color: #666; margin-top: 2px; }
+
         .header-brand {
             background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: white;
@@ -25,6 +27,7 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+
         .app-footer { 
             position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px; 
             text-align: center; font-size: 12px; font-weight: 600; 
@@ -39,7 +42,7 @@
     <div class="header-brand">The DevCoderZ</div>
 
     <div class="max-w-md mx-auto p-4">
-        <h1 id="batchTitle" class="text-2xl font-extrabold text-indigo-600 mb-6">Searching...</h1>
+        <h1 id="batchTitle" class="text-2xl font-extrabold text-indigo-600 mb-6">Loading...</h1>
 
         <h2 class="text-md font-bold mb-3 text-slate-700">Live Classes</h2>
         <div id="liveClassesContainer" class="flex gap-3 overflow-x-auto pb-3 mb-6"></div>
@@ -53,26 +56,17 @@
     </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const batchName = params.get("batch_name") || "Arjuna jee 2027";
-        const batchId = params.get("batch_id");
+        const batchId = new URLSearchParams(window.location.search).get("batch_id");
 
-        async function init() {
-            try {
-                const response = await fetch("https://studywallah-01.dushahnawaz786.workers.dev/live/698ad3519549b300a5e1cc6a");
-                const data = await response.json();
-                
-                const batch = data.data.find(b => b._id === batchId) || data.data[0];
-                
-                if (batch) {
-                    document.getElementById("batchTitle").innerText = batch.name;
-                    renderClasses(batch.liveClasses || []);
-                    renderSubjects(batch.subjects || []);
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
+        fetch(`/api/PW/all-batches-api2.js?batch_id=${encodeURIComponent(batchId)}`)
+            .then(res => res.json())
+            .then(data => {
+                const res = data.data || data;
+                document.getElementById("batchTitle").innerText = res.name || "Batch Details";
+                renderClasses(res.liveClasses || res.live_classes || []);
+                renderSubjects(res.subjects || []);
+            })
+            .catch(err => console.error("Error:", err));
 
         function renderClasses(classes) {
             const container = document.getElementById("liveClassesContainer");
@@ -83,6 +77,7 @@
                     <div class="min-w-[220px] bg-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col gap-1">
                         <div class="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded w-fit">Live</div>
                         <div class="text-xs font-bold text-slate-800 line-clamp-2">${live.topic || "Untitled Class"}</div>
+                        <div class="text-[10px] text-slate-500 mt-1">${live.subjectId?.name || "General"}</div>
                     </div>
                 `).join('');
             }
@@ -91,20 +86,20 @@
         function renderSubjects(subjects) {
             const container = document.getElementById("subjectsContainer");
             container.innerHTML = subjects.map(sub => {
+                const teacher = sub.teacherIds?.map(t => `${t.firstName} ${t.lastName}`).join(", ") || "PW Faculty";
                 const img = (sub.imageId?.baseUrl) ? sub.imageId.baseUrl + sub.imageId.key : 'https://static.pw.live/react-batches/assets/svg/subjects/defaultSubject.svg';
                 return `
                     <div class="subject_card" onclick='location.href="/PW/chapters.html?batch_id=${batchId}&subject_id=${sub._id}"'>
                         <img src="${img}" alt="sub">
                         <div>
                             <div class="subject-title">${sub.subject || sub.name}</div>
+                            <div class="teacher-name">${teacher}</div>
                             <div class="lecture-count">${sub.lectureCount || 0} Lectures</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
-
-        init();
     </script>
 </body>
 </html>
