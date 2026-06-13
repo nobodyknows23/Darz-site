@@ -4,9 +4,6 @@
         masterUrl: document.getElementById("masterUrl"),
         urlPrefix: document.getElementById("urlPrefix"),
         keyInput: document.getElementById("keyInput"),
-        fetchPlaylist: document.getElementById("fetchPlaylist"),
-        progressBar: document.getElementById("progressBar"),
-        statusText: document.getElementById("statusText"),
         logList: document.getElementById("logList")
     };
 
@@ -14,34 +11,51 @@
         const time = new Date().toLocaleTimeString();
         els.logList.innerHTML += `<div>[${time}] ${msg}</div>`;
         els.logList.scrollTop = els.logList.scrollHeight;
+        console.log(`[${time}] ${msg}`);
     }
 
-    async function autoFillFromQuery() {
-        const params = new URLSearchParams(window.location.search);
-        const encodedUrl = params.get("url");
-        if (!encodedUrl) return;
-        
-        const decoded = decodeURIComponent(encodedUrl);
-        const parts = decoded.split("?");
-        els.masterUrl.value = parts[0];
-        els.urlPrefix.value = parts[1] ? "?" + parts.slice(1).join("?") : "";
-        
+    async function fetchKey() {
+        const url = els.masterUrl.value.trim();
+        const prefix = els.urlPrefix.value.trim();
+        if (!url) return log("Error: Master URL missing!");
+
+        log("Fetching KID...");
         try {
-            const mpdUrl = parts[0].replace(/\.m3u8/i, ".mpd") + els.urlPrefix.value;
-            const res = await fetch(`${API_BASE}/api/pw/kid?mpdUrl=${encodeURIComponent(mpdUrl)}`);
-            const data = await res.json();
-            if (data.success) {
-                const oRes = await fetch(`${API_BASE}/api/pw/otp?kid=${encodeURIComponent(data.kid)}`);
-                const oData = await oRes.json();
-                if (oData.key) {
-                    els.keyInput.value = oData.key;
-                    log("Key fetched automatically.");
-                }
+            const mpdUrl = url.replace(/\.m3u8/i, ".mpd") + prefix;
+            
+            // 1. Get KID
+            const resKid = await fetch(`${API_BASE}/api/pw/kid?mpdUrl=${encodeURIComponent(mpdUrl)}`);
+            if (!resKid.ok) throw new Error("Server connection failed");
+            const dataKid = await resKid.json();
+            
+            if (!dataKid.success) throw new Error("KID not found");
+            log("KID Found: " + dataKid.kid);
+
+            // 2. Get Key
+            log("Fetching Decryption Key...");
+            const resKey = await fetch(`${API_BASE}/api/pw/otp?kid=${encodeURIComponent(dataKid.kid)}`);
+            const dataKey = await resKey.json();
+
+            if (dataKey.success && dataKey.key) {
+                els.keyInput.value = dataKey.key;
+                log("Success: Key populated!");
+            } else {
+                throw new Error("Key generation failed");
             }
         } catch (e) {
-            log("Auto-fill failed.");
+            log("Error: " + e.message);
         }
     }
 
-    autoFillFromQuery();
+    // Auto-fill on load
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("url")) {
+        const decoded = decodeURIComponent(params.get("url"));
+        const parts = decoded.split("?");
+        els.masterUrl.value = parts[0];
+        els.urlPrefix.value = parts[1] ? "?" + parts.slice(1).join("?") : "";
+        fetchKey();
+    }
+
+    document.getElementById("fetchKeyBtn").addEventListener("click", fetchKey);
 })();
