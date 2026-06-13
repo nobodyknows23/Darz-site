@@ -1,446 +1,62 @@
-<!DOCTYPE html><html lang="en" style="user-select: none;"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="utf-8">
-  <meta name="robots" content="noindex, follow">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Video Downloader — Mtaiirus</title>
-  <meta name="description" content="HLS video downloader for DevCoderZ courses.">
-  <link rel="icon" type="image/x-icon" href="https://i.ibb.co/G3TLgSgJ/pngtree-mv-vm-letter-vector-logo-image-332121.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&amp;family=DM+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0">
+  <title>Video Downloader</title>
   <link rel="stylesheet" href="/html-js/next-static.css">
-  <script defer="" src="./apv/download.js"></script>
-
+  <script defer src="./apv/download.js"></script>
   <style>
-    :root {
-      --bg: #F5F2EB;
-      --bg2: #ECEAE2;
-      --ink: #1A1814;
-      --ink2: #6B6760;
-      --ink3: #B0ADA7;
-      --accent: #D4540E;
-      --accentl: #F0A87A;
-      --accentb: rgba(212,84,14,.08);
-      --green: #2D6A3F;
-      --greenl: #E4F0E8;
-      --card: #FFFDFB;
-      --border: rgba(26,24,20,.1);
-      --borderh: rgba(26,24,20,.2);
-      --danger: #D4540E;
-      --shadow: 0 4px 20px rgba(26,24,20,.08);
-      --radius: 14px;
-      --font-heading: 'Syne', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-
-    .page, .page-soft {
-      background: var(--bg);
-      min-height: 100vh;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 56px;
-      padding: 0 16px;
-      background: rgba(245,242,235,.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    .topbar-dark {
-      background: var(--ink);
-      color: var(--bg);
-    }
-
-    .topbar-dark h1 {
-      font-family: var(--font-heading);
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: .5px;
-    }
-
-    .icon-button {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: rgba(245,242,235,.1);
-      color: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: 700;
-      transition: .2s;
-      border: 1px solid rgba(245,242,235,.15);
-    }
-
-    .icon-button:hover {
-      background: rgba(245,242,235,.2);
-    }
-
-    .topbar-spacer { width: 36px; }
-
-    .download-shell {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-
-    .panel, .download-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    .form-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .input-group span {
-      font-family: var(--font-heading);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--ink2);
-      letter-spacing: .3px;
-      text-transform: uppercase;
-    }
-
-    .input-group input {
-      height: 44px;
-      padding: 0 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      color: var(--ink);
-      background: var(--bg);
-      outline: none;
-      transition: .2s;
-    }
-
-    .input-group input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(212,84,14,.08);
-    }
-
-    .input-group input::placeholder {
-      color: var(--ink3);
-    }
-
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 44px;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
-      border: 1px solid var(--border);
-      text-decoration: none;
-    }
-
-    .btn-primary {
-      background: var(--ink);
-      color: var(--bg);
-      border-color: transparent;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-outline {
-      background: var(--card);
-      color: var(--ink);
-    }
-
-    .btn-outline:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accentb);
-    }
-
-    .btn-danger {
-      background: var(--accentb);
-      color: var(--accent);
-      border-color: rgba(212,84,14,.25);
-    }
-
-    .btn-danger:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-block {
-      width: 100%;
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .split-actions {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .split-actions .btn {
-      flex: 1;
-    }
-
-    .progress-wrap {
-      margin-bottom: 20px;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 8px;
-      background: var(--bg2);
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .progress-track span {
-      display: block;
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accentl));
-      border-radius: 999px;
-      transition: width .3s ease;
-    }
-
-    #statusText {
-      font-size: 13px;
-      color: var(--ink2);
-      font-weight: 500;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-    }
-
-    .stat-card strong {
-      display: block;
-      font-family: var(--font-heading);
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--ink);
-      margin-bottom: 4px;
-    }
-
-    .stat-card span {
-      font-size: 11px;
-      color: var(--ink3);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-
-    .quality-section {
-      margin-bottom: 20px;
-    }
-
-    .quality-section h2 {
-      font-family: var(--font-heading);
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      letter-spacing: -.2px;
-    }
-
-    .quality-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .quality-list .btn {
-      font-size: 13px;
-    }
-
-    .log-panel {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-
-    .log-title {
-      font-family: var(--font-heading);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ink3);
-      margin-bottom: 8px;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-
-    #logList {
-      font-family: monospace;
-      font-size: 12px;
-      color: var(--ink2);
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    @media (max-width: 600px) {
-      .download-shell { padding: 16px 12px 32px; }
-      .panel { padding: 16px; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .action-row { flex-direction: column; }
-      .split-actions { flex-direction: row; }
-    }
+    :root { --bg: #F5F2EB; --ink: #1A1814; --accent: #D4540E; --border: rgba(26,24,20,.1); }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+    .download-shell { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+    .panel { background: #FFFDFB; border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .input-group input { height: 44px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; transition: 0.3s; }
+    .input-group input:not(:focus) { filter: blur(4px); }
+    .btn { height: 44px; padding: 10px 18px; border-radius: 10px; cursor: pointer; border: none; background: var(--ink); color: #fff; width: 100%; font-weight: 600; }
+    .progress-track { width: 100%; height: 8px; background: #ECEAE2; border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+    #progressBar { display: block; height: 100%; width: 0%; background: var(--accent); transition: width .3s; }
+    .log-panel { background: var(--bg); padding: 14px; border-radius: 10px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
   </style>
-<style type="text/css">* {user-select: auto !important; -webkit-user-select: auto !important;}</style><input type="hidden" id="inject_idm_text_selection"><style></style><script src="/html-js/aut.js" async=""></script><script src="https://cdn.jsdelivr.net/npm/disable-devtool@latest/disable-devtool.min.js" async=""></script></head>
+</head>
 <body>
-  <div class="page page-soft">
-    <header class="topbar topbar-dark">
-      <a class="icon-button" href="./pw.html" aria-label="Back"><span aria-hidden="true">←</span></a>
-      <h1>Video Downloader</h1>
-      <span class="topbar-spacer"></span>
-    </header>
-
-    <main class="download-shell">
-      <section class="panel download-card">
-        <div class="form-stack">
-          <label class="input-group">
-            <span>Master URL (.m3u8)</span>
-            <input id="masterUrl" type="url" placeholder="https://example.com/master.m3u8">
-          </label>
-          <label class="input-group">
-            <span>URL Prefix (Auth Tokens)</span>
-            <input id="urlPrefix" type="text" placeholder="?URLPrefix=...&amp;Expires=...&amp;Signature=...">
-          </label>
-          <label class="input-group">
-            <span>Encryption Key (32 hex chars)</span>
-            <input id="keyInput" type="text" placeholder="fe2f2e27290c72ba8556bda6c3a7ffc2" maxlength="32">
-          </label>
-        </div>
-
-        <div class="action-row">
-          <button class="btn btn-primary btn-block" id="fetchPlaylist" type="button">Fetch Playlist</button>
-          <button class="btn btn-primary btn-block" id="loadSegments" type="button" hidden="">Load Segments</button>
-          <button class="btn btn-primary btn-block" id="downloadMp4" type="button" hidden="">Download MP4</button>
-          <div class="split-actions" id="runningActions" hidden="">
-            <button class="btn btn-outline" id="pauseDownload" type="button">Pause</button>
-            <button class="btn btn-danger" id="stopDownload" type="button">Stop</button>
-          </div>
-        </div>
-
-        <div class="progress-wrap">
-          <div class="progress-track"><span id="progressBar"></span></div>
-          <p id="statusText">Ready</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card"><strong id="qualityCount">0</strong><span>Qualities</span></div>
-          <div class="stat-card"><strong id="segmentCount">0</strong><span>Segments</span></div>
-          <div class="stat-card"><strong id="estimatedSize">N/A</strong><span>Est. Size</span></div>
-          <div class="stat-card"><strong id="downloadedSize">0.00 MB</strong><span>Downloaded</span></div>
-        </div>
-
-        <section id="qualitySection" class="quality-section" hidden="">
-          <h2>Available Qualities:</h2>
-          <div id="qualityList" class="quality-list"></div>
-        </section>
-
-        <section class="log-panel" aria-label="Video downloader log">
-          <p class="log-title">--- Video Downloader Log ---</p>
-          <div id="logList"><div class="log-line info"><span>[11:01:32 AM]</span><span>Ready</span></div><div class="log-line success"><span>[11:01:35 AM]</span><span>Key fetched automatically from URL</span></div></div>
-        </section>
-      </section>
-    </main>
+  <div class="download-shell">
+    <section class="panel">
+      <div class="input-group">
+        <span>Master URL</span>
+        <input id="masterUrl" type="url">
+      </div>
+      <div class="input-group">
+        <span>URL Prefix</span>
+        <input id="urlPrefix" type="text">
+      </div>
+      <div class="input-group">
+        <span>Encryption Key</span>
+        <input id="keyInput" type="text" maxlength="32">
+      </div>
+      <button class="btn" id="fetchPlaylist">Fetch Playlist</button>
+      <button class="btn" id="loadSegments" hidden>Load Segments</button>
+      <button class="btn" id="downloadMp4" hidden>Download MP4</button>
+      <div class="progress-wrap">
+        <div class="progress-track"><span id="progressBar"></span></div>
+        <p id="statusText">Ready</p>
+      </div>
+      <div class="log-panel" id="logList">--- Log ---</div>
+    </section>
   </div>
-
   <script>
-    // ══════════════════ SECURITY LAYER ══════════════════
     (function() {
-      'use strict';
-      var REDIRECT = 'kehamhai.html';
-      var _dtFired = false;
-      var _threshold = 160;
-      function _redirect() { if (_dtFired) return; _dtFired = true; window.location.replace(REDIRECT); }
-      function _checkSize() { var w = window.outerWidth - window.innerWidth; var h = window.outerHeight - window.innerHeight; if (w > _threshold || h > _threshold) _redirect(); }
-      setInterval(_checkSize, 600);
-      setInterval(function() { (function() { var t = new Date(); debugger; if (new Date() - t > 100) _redirect(); })(); }, 3000);
-      document.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
-      ['selectstart','dragstart','copy','cut'].forEach(function(ev) { document.addEventListener(ev, function(e) { e.preventDefault(); return false; }); });
-      document.addEventListener('keydown', function(e) { var k = e.key || ''; if (e.keyCode === 123 || k === 'F12') { e.preventDefault(); e.stopPropagation(); return false; } if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I','J','C','i','j','c'].includes(k)) { e.preventDefault(); e.stopPropagation(); return false; } if ((e.ctrlKey || e.metaKey) && ['u','U','s','S','p','P','a','A'].includes(k)) { e.preventDefault(); e.stopPropagation(); return false; } }, true);
-      window.addEventListener('beforeprint', function(e) { e.stopImmediatePropagation(); window.print = function() { return false; }; }, true);
-      try { var _n = function() {}; ['log','warn','error','info','debug','table','dir','dirxml','trace','group','groupCollapsed','groupEnd','time','timeEnd','profile','profileEnd','count','clear'].forEach(function(m) { if (console[m]) console[m] = _n; }); } catch(_) {}
-      document.documentElement.style.setProperty('-webkit-user-select','none');
-      document.documentElement.style.setProperty('-moz-user-select','none');
-      document.documentElement.style.setProperty('-ms-user-select','none');
-      document.documentElement.style.setProperty('user-select','none');
+      document.addEventListener('contextmenu', e => e.preventDefault(), true);
+      ['selectstart','dragstart','copy','cut'].forEach(ev => {
+        document.addEventListener(ev, e => e.preventDefault());
+      });
+      document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
+          e.preventDefault(); return false;
+        }
+      }, true);
     })();
   </script>
-
-
-</body></html>
+</body>
+</html>
