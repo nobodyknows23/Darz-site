@@ -1689,6 +1689,3 @@ s.onerror = () => {
     console.log("Script load nahi hua");
 };
 document.head.appendChild(s);
-
-
-
