@@ -1,11 +1,22 @@
-Const CONFIG = {
+
+/*****************************************************************
+ * LearnByAKP Custom Player JS
+ * Fixed for signed CloudFront live .m3u8 links
+ *
+ * Query params supported:
+ * ?file_url=
+ * ?url=
+ * ?video_id=&subject_slug=&batch_id=&schedule_id=&subject_id=&topicSlug=
+ *****************************************************************/
+
+const CONFIG = {
   BASE_API: "https://mtaiirus-api.onrender.com",
 
   REQUIRE_DELTA_KEY: false,
   DELTA_ACCESS_KEY: "delta-access-key",
   DELTA_KEY_EXPIRATION: "delta-key-expiration",
 
-  LOGO: "https://devcoderz.vercel.app/pw.png"
+  LOGO: "https://i.ibb.co/9Hm0NqsH/f69ed82b-7169-45fc-a82b-915e453c6340.png"
 };
 
 const $ = (id) => document.getElementById(id);
@@ -105,6 +116,10 @@ const qp = {
 };
 
 state.currentScheduleId = qp.scheduleId;
+
+/* -------------------------------------------------------
+   BASIC HELPERS
+------------------------------------------------------- */
 
 function isKeyValid() {
   if (!CONFIG.REQUIRE_DELTA_KEY) return true;
@@ -214,7 +229,9 @@ function extractYouTubeId(input) {
   return /^[a-zA-Z0-9_-]{11}$/.test(input) ? input : null;
 }
 
-
+/* -------------------------------------------------------
+   DECRYPT HELPER
+------------------------------------------------------- */
 
 async function decryptPayload(payload) {
   if (!payload) return payload;
@@ -283,7 +300,9 @@ async function decryptPayload(payload) {
   }
 }
 
-
+/* -------------------------------------------------------
+   DRM / KEY HELPERS
+------------------------------------------------------- */
 
 async function extractKID(mpdUrl) {
   const url = `${CONFIG.BASE_API}/api/pw/kid?mpdUrl=${encodeURIComponent(mpdUrl)}`;
@@ -307,7 +326,10 @@ async function getClearKey(kid) {
   return data.key;
 }
 
-
+/* -------------------------------------------------------
+   IMPORTANT LIVE HLS FIX
+   Signed CloudFront m3u8 ke child segment me query add karega
+------------------------------------------------------- */
 
 function addManifestQueryFilter(manifestUrl) {
   if (!shakaPlayer || !manifestUrl) return;
@@ -370,7 +392,9 @@ function addManifestQueryFilter(manifestUrl) {
   });
 }
 
-
+/* -------------------------------------------------------
+   PLAYER UI
+------------------------------------------------------- */
 
 function updateControlsVisibility(show = true) {
   state.controlsVisible = show;
@@ -440,7 +464,9 @@ function updateVolumeUI() {
   }
 }
 
-
+/* -------------------------------------------------------
+   PLAY / SEEK / VOLUME
+------------------------------------------------------- */
 
 function getYTState() {
   if (!ytPlayer || !ytPlayer.getPlayerState) return -1;
@@ -552,6 +578,10 @@ function setPlaybackSpeed(speed) {
   closeSettings();
 }
 
+/* -------------------------------------------------------
+   QUALITY SETTINGS
+------------------------------------------------------- */
+
 function getUniqueTracks(tracks) {
   const out = [];
 
@@ -652,7 +682,9 @@ function autoQuality() {
   closeSettings();
 }
 
-
+/* -------------------------------------------------------
+   SETTINGS PANEL
+------------------------------------------------------- */
 
 function openSettingsPanel(type) {
   if (!refs.settingsMain || !refs.speedSub || !refs.qualitySub) return;
@@ -744,7 +776,9 @@ window.backToSettingsMain = function () {
   if (refs.qualitySub) refs.qualitySub.style.display = "none";
 };
 
-
+/* -------------------------------------------------------
+   YOUTUBE SETUP
+------------------------------------------------------- */
 
 function loadYouTubeAPI() {
   return new Promise((resolve) => {
@@ -842,6 +876,9 @@ function onYouTubeStateChange(code) {
   updatePlayUI();
 }
 
+/* -------------------------------------------------------
+   SHAKA SETUP
+------------------------------------------------------- */
 
 async function setupShaka(url) {
   state.youtubeId = null;
@@ -977,6 +1014,9 @@ function openDownload(url) {
   location.href = `/download?url=${encodeURIComponent(finalUrl)}`;
 }
 
+/* -------------------------------------------------------
+   VIDEO RESOLVE
+------------------------------------------------------- */
 
 async function resolveVideoUrl() {
   if (!qp.videoId || !qp.batchId || !qp.subjectId) {
@@ -1125,7 +1165,9 @@ async function loadMainVideo() {
   }
 }
 
-
+/* -------------------------------------------------------
+   LECTURES
+------------------------------------------------------- */
 
 function normalizeLecture(item) {
   return {
@@ -1226,6 +1268,9 @@ function renderLectures() {
   });
 }
 
+/* -------------------------------------------------------
+   ATTACHMENTS
+------------------------------------------------------- */
 
 async function loadAttachments() {
   if (!qp.batchId || !qp.subjectId || !qp.scheduleId) return;
@@ -1290,6 +1335,9 @@ function renderAttachments() {
   });
 }
 
+/* -------------------------------------------------------
+   PANELS
+------------------------------------------------------- */
 
 function togglePanel(panel) {
   if (refs.lecturePanel) {
@@ -1307,6 +1355,9 @@ function togglePanel(panel) {
   }
 }
 
+/* -------------------------------------------------------
+   EVENTS
+------------------------------------------------------- */
 
 function bindEvents() {
   const backBtn = $("backBtn");
@@ -1659,7 +1710,9 @@ function bindEvents() {
   });
 }
 
-
+/* -------------------------------------------------------
+   INIT
+------------------------------------------------------- */
 
 async function init() {
   bindEvents();
