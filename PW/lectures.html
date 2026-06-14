@@ -29,12 +29,17 @@
     <footer class="text-center p-6 text-xs text-gray-400 font-medium">
         Developed by Devansh Sharma
     </footer>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batch_id");
         const sId = params.get("subject_id");
         const tId = params.get("topic_id");
+    </script>
+    
+    <script src="/PW/lecture.js"></script>
 
+    <script>
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
@@ -67,7 +72,7 @@
             container.innerHTML = items.map(i => `
                 <div class="lecture-card" onclick="handleClick('${tab}', ${JSON.stringify(i).replace(/"/g, '&quot;')})">
                     <div class="img-box">
-                        <img src="${i.image || 'https://static.pw.live/react-batches/assets/study/blue-play-icon.svg'}">
+                        <img src="${i.image || i.thumbnail || 'https://devcoderz.vercel.app/pw.png'}" onerror="this.src='https://devcoderz.vercel.app/pw.png'">
                         ${tab.includes('videos') ? '<img src="https://static.pw.live/react-batches/assets/study/blue-play-icon.svg" class="play-icon">' : ''}
                     </div>
                     <div class="flex-1">
@@ -82,8 +87,7 @@
             const targetSId = item.subjectSlug || sId;
             const targetTId = item.topicSlug || tId;
             if (tab.includes('videos')) {
-                const url = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${targetSId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${targetSId}&topicSlug=${targetTId}`;
-                window.location.href = url;
+                window.location.href = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${targetSId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${targetSId}&topicSlug=${targetTId}`;
             } else {
                 alert("Opening content...");
             }
