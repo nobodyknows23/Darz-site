@@ -48,7 +48,7 @@
             try {
                 const isId = tId.length > 15;
                 const paramKey = isId ? 'topicId' : 'topicSlug';
-                const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&${paramKey}=${tId}&contentType=${tab}`);
+                const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batch_id=${bId}&subject_id=${sId}&${paramKey}=${topic_id}&contentType=${tab}`);
                 const json = await res.json();
                 const decrypted = await decryptPayload(json.data);
                 render(decrypted.data || [], tab);
