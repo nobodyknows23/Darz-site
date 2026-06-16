@@ -1,15 +1,7 @@
-/*****************************************************************
- * LearnByAKP Custom Player JS
- * Fixed for signed CloudFront live .m3u8 links
- *
- * Query params supported:
- * ?file_url=
- * ?url=
- * ?video_id=&subject_slug=&batch_id=&schedule_id=&subject_id=&topicSlug=
- *****************************************************************/
+
 
 const CONFIG = {
-  BASE_API: "https://mtaiirusapi.onrender.com",
+  BASE_API: "https://apiserver.deltastudy.site",
 
   REQUIRE_DELTA_KEY: false,
   DELTA_ACCESS_KEY: "delta-access-key",
