@@ -46,7 +46,7 @@
             const container = document.getElementById('contentContainer');
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
             try {
-                const res = await fetch(`https://mtaiirusapi.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
+                const res = await fetch(`https://apiserver.deltastudy.site/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
                 const json = await res.json();
                 const decrypted = await decryptPayload(json.data);
                 render(decrypted.data || [], tab);
