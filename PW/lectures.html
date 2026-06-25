@@ -6,59 +6,59 @@
     <title>Lectures</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .notes-card { background: white; padding: 1rem; margin-bottom: 0.75rem; border-radius: 0.75rem; border: 1px solid #f3f4f6; display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .notes-icon { font-size: 1.5rem; }
-        .notes-topic { font-weight: bold; color: #1f2937; font-size: 0.9rem; }
-        .notes-time { font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem; }
-        .notes-view-btn { background: #4f46e5; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
-        .cont-badge { background: #eef2ff; color: #4f46e5; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 800; }
+        :root { --accent: #4f46e5; }
+        .cnt-tab { padding: 0.75rem 1rem; font-weight: bold; font-size: 0.85rem; color: #6b7280; border-bottom: 2px solid transparent; }
+        .cnt-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        .lec-card { background: white; border-radius: 1rem; padding: 1rem; margin-bottom: 0.75rem; border: 1px solid #f3f4f6; display: flex; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .lec-thumb { position: relative; width: 120px; height: 70px; border-radius: 0.5rem; overflow: hidden; background: #e5e7eb; }
+        .lec-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .lec-dur { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; }
+        .lec-topic { font-size: 0.9rem; font-weight: 700; color: #1f2937; line-height: 1.2; }
     </style>
 </head>
 <body class="bg-gray-50 pb-16" oncontextmenu="return false;">
-    <nav class="h-16 bg-white border-b flex items-center px-4 sticky top-0 z-20">
-        <button onclick="history.back()" class="text-gray-600 font-bold text-sm">← Back</button>
-        <h1 class="ml-4 font-bold text-gray-800">Content</h1>
-    </nav>
-    <div id="tabsContainer" class="flex gap-2 p-4 overflow-x-auto bg-white border-b sticky top-16 z-10">
-        <button onclick="loadContent('videos', this)" class="tab-btn active px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold">Lectures</button>
-        <button onclick="loadContent('notes', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">Notes</button>
-        <button onclick="loadContent('DppNotes', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">DPP</button>
-    </div>
-    <div id="contentContainer" class="p-4">
-        <div class="text-center mt-10 text-gray-500">Loading...</div>
+    <div id="contentPanel">
+        <div class="bg-white border-b sticky top-0 z-20 px-4 py-3">
+            <button onclick="history.back()" class="text-sm font-bold text-gray-600">← Back</button>
+        </div>
+        <div id="tabs" class="flex overflow-x-auto bg-white border-b sticky top-14 z-10">
+            <button onclick="loadContent('videos', this)" class="cnt-tab active">▶ Videos</button>
+            <button onclick="loadContent('notes', this)" class="cnt-tab">📄 Notes</button>
+            <button onclick="loadContent('DppNotes', this)" class="cnt-tab">📝 DPP</button>
+        </div>
+        <div id="cnt-body" class="p-4">
+            <div class="text-center mt-10 text-gray-400">Loading...</div>
+        </div>
     </div>
     <script>
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || (e.ctrlKey && e.key === 'U')) { e.preventDefault(); }
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || (e.ctrlKey && e.key === 'U')) e.preventDefault();
         });
         const params = new URLSearchParams(window.location.search);
-        const bId = params.get("batchId");
-        const sId = params.get("subjectId");
-        const sSlug = params.get("subjectSlug");
-        const chapterSlug = params.get("chapterSlug");
+        const bId = params.get("batchId"), sId = params.get("subjectId"), sSlug = params.get("subjectSlug"), chapterSlug = params.get("chapterSlug");
         async function loadContent(tab, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('bg-indigo-600', 'text-white'); b.classList.add('bg-white', 'border'); });
-            if(btn) { btn.classList.add('bg-indigo-600', 'text-white'); btn.classList.remove('bg-white', 'border'); }
-            const container = document.getElementById('contentContainer');
-            container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
+            document.querySelectorAll('.cnt-tab').forEach(t => t.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            const body = document.getElementById('cnt-body');
+            body.innerHTML = '<div class="text-center mt-10 text-gray-400">Loading...</div>';
             try {
-                const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}&tag=${chapterSlug}&subslug=${sSlug}`;
-                const res = await fetch(url);
+                const res = await fetch(`https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}&tag=${chapterSlug}&subslug=${sSlug}`);
                 const json = await res.json();
-                console.log("API Response Debug:", json);
-                if (json.html && json.html.length > 20) {
-                    container.innerHTML = json.html;
-                } else if (json.data && json.data.length > 0) {
-                    container.innerHTML = json.data.map(i => `<div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100"><p class="font-bold text-gray-800">${i.name || i.topicName || "Untitled"}</p></div>`).join('');
-                } else {
-                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found for this category.</p>';
+                if (json.html) {
+                    body.innerHTML = json.html;
+                } else if (json.data) {
+                    body.innerHTML = json.data.map(i => `
+                        <div class="lec-card">
+                            <div class="lec-thumb"><img src="${i.image || ''}" onerror="this.style.display='none'"></div>
+                            <div class="lec-info"><p class="lec-topic">${i.topicName || i.name}</p></div>
+                        </div>
+                    `).join('');
                 }
             } catch (e) {
-                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data. Check console.</div>';
+                body.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading content</div>';
             }
         }
-        window.__viewNote = function(el) { alert("Action Triggered"); };
-        loadContent('videos', document.querySelector('.tab-btn'));
+        loadContent('videos', document.querySelector('.cnt-tab'));
     </script>
 </body>
 </html>
