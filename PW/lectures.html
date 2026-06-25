@@ -6,8 +6,9 @@
     <title>Lectures</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .notes-card { background: white; padding: 1rem; margin-bottom: 0.75rem; border-radius: 0.75rem; border: 1px solid #f3f4f6; display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .notes-view-btn { background: #4f46e5; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+        body { -webkit-user-select: none; user-select: none; }
+        .tab-btn { padding: 0.6rem 1.2rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; }
+        .tab-btn.active { background: #4f46e5; color: white; }
     </style>
 </head>
 <body class="bg-gray-50 pb-16" oncontextmenu="return false;">
@@ -16,46 +17,49 @@
         <h1 class="ml-4 font-bold text-gray-800">Content</h1>
     </nav>
     <div id="tabsContainer" class="flex gap-2 p-4 overflow-x-auto bg-white border-b sticky top-16 z-10">
-        <button onclick="loadContent('videos', this)" class="tab-btn active px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold">Lectures</button>
-        <button onclick="loadContent('notes', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">Notes</button>
-        <button onclick="loadContent('DppNotes', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">DPP</button>
+        <button onclick="loadContent('videos', this)" class="tab-btn active bg-indigo-600 text-white">Lectures</button>
+        <button onclick="loadContent('notes', this)" class="tab-btn bg-white border">Notes</button>
+        <button onclick="loadContent('DppNotes', this)" class="tab-btn bg-white border">DPP</button>
     </div>
-    <div id="contentContainer" class="p-4"></div>
+    <div id="contentContainer" class="p-4">
+        <div class="text-center mt-10 text-gray-500">Loading...</div>
+    </div>
     <script>
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || (e.ctrlKey && e.key === 'U')) e.preventDefault();
+        });
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batchId");
         const sId = params.get("subjectId");
-        const sSlug = params.get("subjectSlug");
-        const chapterSlug = params.get("chapterSlug");
-
+        
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.remove('bg-indigo-600', 'text-white');
                 b.classList.add('bg-white', 'border');
             });
-            if(btn) { btn.classList.add('bg-indigo-600', 'text-white'); btn.classList.remove('bg-white', 'border'); }
-            
+            if(btn) {
+                btn.classList.add('bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-white', 'border');
+            }
             const container = document.getElementById('contentContainer');
-            container.innerHTML = '<div class="text-center mt-10">Loading...</div>';
-            
+            container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
             try {
-                // Sahi URL Construction
-                const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}&tag=${chapterSlug}&subslug=${sSlug}`;
+                // Ab ye sirf basic params use karega jaisa aapne bataya
+                const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}`;
                 const res = await fetch(url);
                 const json = await res.json();
-                
-                // HTML inject karne ke baad buttons ko activate karna
-                container.innerHTML = json.html || "No content found.";
-                
-                // Global viewNote function (Agar button HTML mein hai)
-                window.__viewNote = function(el) {
-                    console.log("Clicked:", el.dataset);
-                    alert("View Clicked for Schedule ID: " + el.dataset.schedid);
-                };
+                if (json.html) {
+                    container.innerHTML = json.html;
+                } else if (json.data) {
+                    container.innerHTML = json.data.map(i => `<div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100"><p class="font-bold text-gray-800">${i.name || i.topicName || "Untitled"}</p></div>`).join('');
+                } else {
+                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
+                }
             } catch (e) {
-                container.innerHTML = `<div class="text-center mt-10 text-red-500">Error: ${e.message}</div>`;
+                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
             }
         }
+        window.__viewNote = function(el) { alert("Opening..."); };
         loadContent('videos', document.querySelector('.tab-btn'));
     </script>
 </body>
