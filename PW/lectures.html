@@ -24,6 +24,7 @@
     <div id="contentContainer" class="p-4">
         <div class="text-center mt-10 text-gray-500">Loading...</div>
     </div>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batchId");
@@ -39,27 +40,25 @@
                 btn.classList.add('bg-indigo-600', 'text-white');
                 btn.classList.remove('bg-white', 'border');
             }
-            
+
             const container = document.getElementById('contentContainer');
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
-            
-            try {
-                const u = `https://devcoderz-pw.vercel.app/api/PW/all-batches-api4.js?batchId=${bId}&subjectId=${sId}&contentType=${tab}${tag}`;
-                const res = await fetch(u);
-                
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
-                    return;
-                }
 
+            try {
+                const u = `https://devcoderz-pw.vercel.app/api/PW/all-batches-api4.js?batchId=\( {bId}&subjectId= \){sId}&contentType=\( {tab} \){tag}`;
+                const res = await fetch(u);
                 const json = await res.json();
-                
+
                 if (json.data && json.data.length > 0) {
                     container.innerHTML = json.data.map(i => `
-                        <div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            ${i.videoDetails?.image ? `<img src="${i.videoDetails.image}" class="w-16 h-12 rounded-lg object-cover">` : ''}
-                            <p class="font-bold text-gray-800">${i.topic || i.videoDetails?.name || "Untitled"}</p>
+                        <div onclick="playVideo('\( {i._id || i.videoDetails?._id}', ' \){encodeURIComponent(i.topic || i.videoDetails?.name || 'Lecture')}')" 
+                             class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer hover:bg-gray-50">
+                            \( {i.videoDetails?.image ? `<img src=" \){i.videoDetails.image}" class="w-16 h-12 rounded-lg object-cover">` : ''}
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-800">${i.topic || i.videoDetails?.name || "Untitled"}</p>
+                                \( {i.videoDetails?.duration ? `<p class="text-xs text-gray-500 mt-1"> \){Math.floor(i.videoDetails.duration/60)}:${(i.videoDetails.duration%60).toString().padStart(2,'0')}</p>` : ''}
+                            </div>
+                            <div class="text-indigo-500 text-2xl">▶</div>
                         </div>
                     `).join('');
                 } else {
@@ -69,6 +68,16 @@
                 container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
             }
         }
+
+        function playVideo(videoId, title) {
+            if (!videoId) {
+                alert("Video ID not found!");
+                return;
+            }
+            const url = `./player.html?batch_id=\( {bId}&subject_id= \){sId}&video_id=\( {videoId}&title= \){title}`;
+            window.location.href = url;
+        }
+
         loadContent('videos', document.querySelector('.tab-btn'));
     </script>
 </body>
