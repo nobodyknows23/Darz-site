@@ -34,4 +34,4 @@ export default async function handler(req, res) {
         console.error(error);
         return res.status(500).json({ error: "Failed to fetch chapters data securely from core network." });
     }
-}
+} 
