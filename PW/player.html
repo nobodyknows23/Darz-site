@@ -21,7 +21,16 @@
 <input type="hidden" id="data-video-id" value="">
 <input type="hidden" id="data-batch-id" value="">
 <input type="hidden" id="data-subject-id" value="">
+<input type="hidden" id="data-topic-id" value="">
 <input type="hidden" id="data-title" value="">
+<input type="hidden" id="data-video-url" value="">
+<input type="hidden" id="data-original-url" value="">
+<input type="hidden" id="data-signed-url" value="">
+<input type="hidden" id="data-key-id" value="">
+<input type="hidden" id="data-key-value" value="">
+<input type="hidden" id="data-has-drm" value="">
+<input type="hidden" id="data-license-url" value="">
+<input type="hidden" id="data-license-token" value="">
 
 <script src="player.js"></script>
 
@@ -32,18 +41,110 @@
     const videoId   = params.get('video_id') || params.get('videoId') || '';
     const batchId   = params.get('batch_id') || params.get('batchId') || '';
     const subjectId = params.get('subject_id') || params.get('subjectId') || '';
+    const topicId   = params.get('topic_id') || params.get('topicId') || '';
     const title     = params.get('title') || params.get('chapterName') || 'PW Lecture';
+    const poster    = params.get('poster') || '';
 
     // Set hidden fields for player.js
     document.getElementById('data-video-id').value = videoId;
     document.getElementById('data-batch-id').value = batchId;
     document.getElementById('data-subject-id').value = subjectId;
+    document.getElementById('data-topic-id').value = topicId;
     document.getElementById('data-title').value = decodeURIComponent(title);
 
     document.getElementById('pageTitle').textContent = decodeURIComponent(title);
 
-    // Auto start player
-    console.log('🚀 Starting player with:', {videoId, batchId, subjectId, title});
+    // Fetch video data and populate player
+    async function initPlayer() {
+        if (!videoId || !batchId || !subjectId) {
+            console.error('❌ Missing required parameters');
+            return;
+        }
+
+        try {
+            // Get token
+            const token = await getValidToken();
+            if (!token) {
+                console.error('❌ No token available');
+                return;
+            }
+
+            // Fetch video details from API
+            const apiUrl = `https://api.penpencil.co/v1/batches/${batchId}/subject/${subjectId}/schedule/${videoId}`;
+            console.log('📡 Fetching video details:', apiUrl);
+
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Client-Id': '5eb393ee95fab7468a79d189',
+                    'Client-Type': 'WEB',
+                    'Client-Version': '4.6.5',
+                    'Randomid': crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const data = result.data || {};
+
+            console.log('✅ Video details loaded:', data);
+
+            // Populate hidden fields with video data
+            const videoUrl = data.videoUrl || data.video_url || '';
+            const originalUrl = data.originalUrl || data.original_url || '';
+            const signedUrl = data.signedUrl || data.signed_url || '';
+            const keyId = data.keyId || data.key_id || '';
+            const keyValue = data.keyValue || data.key_value || '';
+            const hasDrm = data.hasDrm || data.has_drm || '';
+            const licenseUrl = data.licenseUrl || data.license_url || '';
+            const licenseToken = data.licenseToken || data.license_token || '';
+
+            document.getElementById('data-video-url').value = videoUrl;
+            document.getElementById('data-original-url').value = originalUrl;
+            document.getElementById('data-signed-url').value = signedUrl;
+            document.getElementById('data-key-id').value = keyId;
+            document.getElementById('data-key-value').value = keyValue;
+            document.getElementById('data-has-drm').value = hasDrm ? '1' : '0';
+            document.getElementById('data-license-url').value = licenseUrl;
+            document.getElementById('data-license-token').value = licenseToken;
+
+            // Initialize player
+            if (typeof boot === 'function') {
+                console.log('🚀 Booting player...');
+                boot();
+            } else {
+                console.log('⏳ Waiting for player.js to load...');
+                // Wait for player.js to fully load
+                const checkBoot = setInterval(() => {
+                    if (typeof boot === 'function') {
+                        clearInterval(checkBoot);
+                        console.log('🚀 Booting player...');
+                        boot();
+                    }
+                }, 100);
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading video:', error);
+            document.getElementById('shell').innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:center;height:100vh;color:white;flex-direction:column;gap:20px;">
+                    <p style="color:red;">Failed to load video: ${error.message}</p>
+                    <button onclick="location.reload()" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer;">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    // Wait for player.js to load then init
+    window.addEventListener('load', function() {
+        console.log('📄 Page loaded, initializing...');
+        // Small delay to ensure player.js is fully loaded
+        setTimeout(initPlayer, 500);
+    });
 </script>
 
 </body>
