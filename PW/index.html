@@ -6,7 +6,7 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <meta name="theme-color" content="#4f46e5">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The DevCoderZ - Classroom</title>
+    <title>Darz Wallah - Classroom</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; font-family: Inter, sans-serif; }
       body { background: #f8fafc; color: #0f172a; overflow: hidden; }
@@ -47,7 +47,7 @@
     </script>
 </head>
 <body>
-    <div class="header">The DevCoderZ <span>PW</span></div>
+    <div class="header">Darz Wallah <span>PW</span></div>
     <div class="search-section"><input id="searchInput" class="search-box" placeholder="Search batches..."></div>
     <div class="tab-nav">
       <button class="tab-btn active" id="totalTab">Total</button>
@@ -57,7 +57,7 @@
       <div id="total" class="grid"></div>
       <div id="fav" class="grid" style="display: none"></div>
     </div>
-    <div class="app-footer">Developed by - <span>Devansh Sharma</span></div>
+    <div class="app-footer">Developed by - <span>Unknown</span></div>
     <script>
       const FALLBACK_IMG = "https://devcoderz.vercel.app/pw.png";
       let ALL = [], filtered = [], favs = JSON.parse(localStorage.getItem("favs") || "[]"), cachedBatches = JSON.parse(localStorage.getItem("fav_batches") || "{}");
