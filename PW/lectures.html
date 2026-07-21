@@ -5,66 +5,886 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lectures - Devansh Sharma</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="player.js" defer></script>
-    <style> body { background-color: #f0f9ff; font-family: sans-serif; } </style>
-</head>
-<body class="min-h-screen flex flex-col">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --primary-light: #e0f2fe;
+            --secondary: #6366f1;
+            --gradient-start: #0ea5e9;
+            --gradient-end: #6366f1;
+        }
 
-    <nav class="bg-sky-500 p-4 text-white shadow-lg">
-        <h1 class="text-xl font-bold text-center">Lectures</h1>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        .nav-gradient {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .lecture-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(14, 165, 233, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .lecture-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .lecture-card:active {
+            transform: scale(0.98);
+        }
+
+        .thumbnail-container {
+            position: relative;
+            background: #f1f5f9;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .lecture-card:hover .thumbnail-container img {
+            transform: scale(1.05);
+        }
+
+        .thumbnail-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lecture-card:hover .thumbnail-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(14, 165, 233, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .lecture-card:hover .play-icon {
+            transform: scale(1);
+        }
+
+        .duration-badge {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(14, 165, 233, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .api-badge {
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-badge.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .api-badge.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .api-badge.loading {
+            background: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status-dot.success {
+            background: #22c55e;
+        }
+        .status-dot.error {
+            background: #ef4444;
+        }
+        .status-dot.loading {
+            background: #eab308;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .view-toggle-btn {
+            transition: all 0.2s ease;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .view-toggle-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .view-toggle-btn:hover:not(.active) {
+            background: rgba(14, 165, 233, 0.1);
+        }
+
+        .search-input {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav-gradient p-4 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <h1 class="text-xl font-bold">Lectures</h1>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-wrap">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" id="searchInput" 
+                           placeholder="Search lectures..." 
+                           class="search-input bg-white/20 rounded-lg px-4 py-2 text-sm text-white placeholder-white/70 w-40 md:w-56 focus:bg-white/30">
+                    <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-white/70"></i>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="flex bg-white/10 rounded-lg p-1">
+                    <button onclick="setView('grid')" id="gridViewBtn" class="view-toggle-btn active text-sm">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button onclick="setView('list')" id="listViewBtn" class="view-toggle-btn text-sm">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+
+                <!-- Refresh -->
+                <button onclick="refreshLectures()" 
+                        class="bg-white/20 hover:bg-white/30 rounded-lg p-2 transition-all">
+                    <i class="fas fa-sync-alt refresh-indicator"></i>
+                </button>
+
+                <!-- API Status -->
+                <span id="apiStatus" class="api-badge loading text-xs hidden md:inline-flex">
+                    <span class="status-dot loading"></span>
+                    Loading...
+                </span>
+            </div>
+        </div>
     </nav>
 
-    <div id="contentContainer" class="p-4 flex-grow">
-        <div class="text-center mt-20 text-sky-600 font-bold">Fetching official data...</div>
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto p-4">
+
+        <!-- Stats Bar -->
+        <div id="statsBar" class="hidden bg-white rounded-xl shadow-sm p-4 mb-4 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-6">
+                <div>
+                    <span class="text-sm text-gray-500">Total Lectures</span>
+                    <span id="totalLectures" class="font-bold text-sky-600 ml-2">0</span>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-500">Source</span>
+                    <span id="sourceName" class="font-medium text-gray-700 ml-2">-</span>
+                </div>
+            </div>
+            <div class="text-sm text-gray-400">
+                <i class="far fa-clock mr-1"></i>
+                <span id="lastUpdated">Just now</span>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-20">
+            <div class="loader"></div>
+            <p class="text-sky-600 font-bold text-lg">Fetching lectures...</p>
+            <p class="text-sky-400 text-sm mt-2">Trying multiple sources for best results</p>
+            <div class="mt-6 flex justify-center gap-3">
+                <span class="px-3 py-1 bg-sky-100 text-sky-600 rounded-full text-xs">⚡ Fast</span>
+                <span class="px-3 py-1 bg-sky-100 text-sky-600 rounded-full text-xs">🔄 Multiple Sources</span>
+                <span class="px-3 py-1 bg-sky-100 text-sky-600 rounded-full text-xs">📡 Auto-Fallback</span>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden text-center py-20">
+            <div class="text-6xl mb-4">😅</div>
+            <p class="text-red-500 font-bold text-xl">Failed to Load Lectures</p>
+            <p id="errorMessage" class="text-gray-500 text-sm mt-2 max-w-md mx-auto">Please check your connection and try again</p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <button onclick="refreshLectures()" class="px-6 py-3 bg-sky-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:bg-sky-600">
+                    <i class="fas fa-redo mr-2"></i> Retry
+                </button>
+                <button onclick="clearCache()" class="px-6 py-3 bg-gray-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:bg-gray-600">
+                    <i class="fas fa-trash mr-2"></i> Clear Cache
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <div class="text-6xl mb-4">📚</div>
+            <p class="text-gray-600 font-bold text-xl">No Lectures Found</p>
+            <p class="text-gray-400 text-sm mt-2 max-w-md mx-auto">Try selecting a different topic or check back later for new content</p>
+        </div>
+
+        <!-- Lectures Grid -->
+        <div id="lecturesGrid" class="hidden">
+            <div id="lectureContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Lectures rendered here -->
+            </div>
+            <div id="loadMoreContainer" class="hidden text-center mt-8">
+                <button onclick="loadMore()" class="px-6 py-3 bg-sky-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:bg-sky-600">
+                    <i class="fas fa-chevron-down mr-2"></i> Load More
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <footer class="p-4 text-center text-sky-700 font-semibold text-sm bg-white border-t border-sky-100">
+    <!-- Footer -->
+    <footer class="mt-auto p-4 text-center text-sky-700 font-semibold text-sm bg-white border-t border-sky-100">
+        <i class="fas fa-bolt text-sky-400 mr-1"></i>
         Developed by Devansh Sharma
+        <span class="text-gray-300 mx-2">•</span>
+        <span class="text-gray-400 font-normal text-xs">v2.0 Enhanced</span>
     </footer>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        
-        async function loadContent() {
-            const container = document.getElementById('contentContainer');
-            const bId = params.get("batchId");
-            const sId = params.get("subjectId");
-            const tag = params.get("tag");
-
-            try {
-                // 1. Pehle valid token lo (player.js mein define hai)
-                const token = await getValidToken(); 
-                
-                // 2. Official Penpencil API call
-                const u = `https://api.penpencil.co/v2/batches/${bId}/subject/${sId}/contents?tag=${tag}&contentType=videos&page=1`;
-                
-                const res = await fetch(u, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Client-Type': 'WEB'
-                    }
-                });
-                
-                const json = await res.json();
-
-                if (json.data && json.data.length > 0) {
-                    container.innerHTML = json.data.map(i => `
-                        <div class="bg-white p-4 mb-3 rounded-2xl shadow-md border border-sky-100 flex items-center gap-4 cursor-pointer hover:bg-sky-50" 
-                             onclick="window.location.href='player.html?videoId=${i._id}'">
-                            ${i.videoDetails?.image ? `<img src="${i.videoDetails.image}" class="w-20 h-16 rounded-xl object-cover shadow-sm">` : ''}
-                            <p class="font-bold text-sky-900 text-sm">${i.topic || "Untitled"}</p>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p class="text-center mt-10 text-sky-500">No content found</p>';
+        // ==================== CONFIGURATION ====================
+        const CONFIG = {
+            endpoints: [
+                { 
+                    name: 'EduVibe', 
+                    url: (bId, sId, tag) => 
+                        `/api/lectures?batch_id=${bId}&subject_id=${sId}&topic_id=${tag}&tab=videos&page=${currentPage}`,
+                    type: 'proxy'
+                },
+                { 
+                    name: 'StudySpark', 
+                    url: (bId, sId, tag) => 
+                        `https://thestudyspark.site/api-server/v2/batches/${bId}/subject/${sId}/content?page=${currentPage}&contentType=videos&tag=${tag}`,
+                    type: 'external'
+                },
+                { 
+                    name: 'DevCoderZ', 
+                    url: (bId, sId, tag) => 
+                        `/api/lectures2?batch_id=${bId}&subject_id=${sId}&topic_id=${tag}&tab=videos&page=${currentPage}`,
+                    type: 'proxy'
                 }
+            ],
+            cacheDuration: 5 * 60 * 1000, // 5 minutes
+            maxRetries: 3,
+            retryDelay: 1000
+        };
+
+        // ==================== STATE ====================
+        let state = {
+            lectures: [],
+            currentPage: 1,
+            currentApiIndex: 0,
+            isLoading: false,
+            hasMore: true,
+            viewMode: 'grid', // 'grid' or 'list'
+            searchQuery: '',
+            source: 'Unknown',
+            batchId: '',
+            subjectId: '',
+            topicId: ''
+        };
+
+        // ==================== DOM REFS ====================
+        const DOM = {
+            container: document.getElementById('contentContainer'),
+            loading: document.getElementById('loadingState'),
+            error: document.getElementById('errorState'),
+            empty: document.getElementById('emptyState'),
+            grid: document.getElementById('lecturesGrid'),
+            lectureContainer: document.getElementById('lectureContainer'),
+            loadMore: document.getElementById('loadMoreContainer'),
+            stats: document.getElementById('statsBar'),
+            totalLectures: document.getElementById('totalLectures'),
+            sourceName: document.getElementById('sourceName'),
+            lastUpdated: document.getElementById('lastUpdated'),
+            apiStatus: document.getElementById('apiStatus'),
+            errorMessage: document.getElementById('errorMessage'),
+            searchInput: document.getElementById('searchInput')
+        };
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                batchId: params.get('batchId') || params.get('batch_id'),
+                subjectId: params.get('subjectId') || params.get('subject_id'),
+                topicId: params.get('tag') || params.get('topicId') || params.get('topic_id') || params.get('chapterId')
+            };
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            if (typeof seconds === 'string' && seconds.includes(':')) return seconds;
+            const num = typeof seconds === 'string' ? parseFloat(seconds) : seconds;
+            if (isNaN(num)) return '0:00';
+            const mins = Math.floor(num / 60);
+            const secs = Math.floor(num % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d)) return '';
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function debounce(fn, delay = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        // ==================== CACHE MANAGEMENT ====================
+        function getCacheKey() {
+            const { batchId, subjectId, topicId } = getQueryParams();
+            return `lectures_cache_${batchId}_${subjectId}_${topicId}`;
+        }
+
+        function saveToCache(data) {
+            try {
+                const cacheKey = getCacheKey();
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    data,
+                    timestamp: Date.now()
+                }));
             } catch (e) {
-                container.innerHTML = '<p class="text-center mt-10 text-red-500">Error loading data.</p>';
+                console.warn('Cache save failed:', e);
             }
         }
-        
-        // Wait for player.js to load, then trigger
-        window.addEventListener('load', loadContent);
+
+        function getFromCache() {
+            try {
+                const cacheKey = getCacheKey();
+                const cached = localStorage.getItem(cacheKey);
+                if (!cached) return null;
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp > CONFIG.cacheDuration) {
+                    localStorage.removeItem(cacheKey);
+                    return null;
+                }
+                return data;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function clearCache() {
+            try {
+                const cacheKey = getCacheKey();
+                localStorage.removeItem(cacheKey);
+                showToast('Cache cleared successfully', 'success');
+                refreshLectures();
+            } catch (e) {
+                showToast('Failed to clear cache', 'error');
+            }
+        }
+
+        // ==================== TOAST NOTIFICATIONS ====================
+        function showToast(message, type = 'info') {
+            const colors = {
+                info: 'bg-blue-500',
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500'
+            };
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-lg z-50 transition-all transform translate-y-0 opacity-100`;
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ==================== API STATUS ====================
+        function updateApiStatus(status, message) {
+            const statusMap = {
+                loading: { class: 'loading', icon: 'fa-spinner fa-spin', text: 'Loading...' },
+                success: { class: 'success', icon: 'fa-check-circle', text: 'Connected' },
+                error: { class: 'error', icon: 'fa-exclamation-circle', text: 'Failed' }
+            };
+            const s = statusMap[status] || statusMap.loading;
+            DOM.apiStatus.className = `api-badge ${s.class}`;
+            DOM.apiStatus.innerHTML = `
+                <span class="status-dot ${s.class}"></span>
+                ${message || s.text}
+            `;
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        function renderLectures(lectures, source, append = false) {
+            if (!append) {
+                state.lectures = lectures;
+                DOM.lectureContainer.innerHTML = '';
+            } else {
+                state.lectures = [...state.lectures, ...lectures];
+            }
+
+            if (state.lectures.length === 0) {
+                DOM.grid.classList.add('hidden');
+                DOM.empty.classList.remove('hidden');
+                return;
+            }
+
+            DOM.grid.classList.remove('hidden');
+            DOM.empty.classList.add('hidden');
+            DOM.loading.classList.add('hidden');
+            DOM.error.classList.add('hidden');
+
+            // Update stats
+            DOM.stats.classList.remove('hidden');
+            DOM.totalLectures.textContent = state.lectures.length;
+            DOM.sourceName.textContent = source;
+            DOM.lastUpdated.textContent = new Date().toLocaleTimeString();
+
+            // Render lectures
+            const html = state.lectures.map((lecture, index) => {
+                const isList = state.viewMode === 'list';
+                return `
+                    <div class="lecture-card fade-in ${isList ? 'flex' : ''}" 
+                         style="animation-delay: ${Math.min(index * 0.05, 0.5)}s"
+                         onclick="openLecture('${lecture.id}')">
+                        
+                        <div class="${isList ? 'w-48 flex-shrink-0' : ''} thumbnail-container">
+                            ${lecture.thumbnail ? `
+                                <img src="${lecture.thumbnail}" 
+                                     alt="${lecture.title}"
+                                     loading="lazy"
+                                     onerror="this.parentElement.innerHTML = '<div class=\\'thumbnail-placeholder w-full h-full flex items-center justify-center bg-sky-100\\'><i class=\\'fas fa-video text-4xl text-sky-400\\'></i></div>'">
+                            ` : `
+                                <div class="thumbnail-placeholder w-full h-full flex items-center justify-center bg-sky-100">
+                                    <i class="fas fa-video text-4xl text-sky-400"></i>
+                                </div>
+                            `}
+                            <div class="thumbnail-overlay">
+                                <div class="play-icon">
+                                    <i class="fas fa-play ml-1"></i>
+                                </div>
+                            </div>
+                            ${lecture.duration ? `
+                                <div class="duration-badge">
+                                    <i class="fas fa-clock mr-1"></i> ${formatDuration(lecture.duration)}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="flex-1 p-4 ${isList ? 'flex flex-col justify-between' : ''}">
+                            <div>
+                                <h3 class="font-bold text-sky-900 text-sm line-clamp-2">${lecture.title}</h3>
+                                ${lecture.description ? `
+                                    <p class="text-gray-500 text-xs mt-2 line-clamp-2">${lecture.description}</p>
+                                ` : ''}
+                                ${lecture.chapter ? `
+                                    <span class="text-xs text-gray-400 mt-1 block">${lecture.chapter}</span>
+                                ` : ''}
+                            </div>
+                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-sky-50">
+                                <div class="flex items-center gap-2">
+                                    ${lecture.isFree !== undefined ? `
+                                        <span class="text-xs ${lecture.isFree ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'} px-2 py-1 rounded-full">
+                                            ${lecture.isFree ? 'Free' : 'Premium'}
+                                        </span>
+                                    ` : ''}
+                                    ${lecture.views ? `
+                                        <span class="text-xs text-gray-400">
+                                            <i class="far fa-eye mr-1"></i> ${lecture.views}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <span class="text-xs bg-sky-50 text-sky-600 px-3 py-1 rounded-full flex items-center gap-1">
+                                    <i class="fas fa-play text-[10px]"></i> Play
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            DOM.lectureContainer.insertAdjacentHTML(append ? 'beforeend' : 'afterbegin', html);
+
+            // Update load more button
+            if (state.hasMore && lectures.length === 20) {
+                DOM.loadMore.classList.remove('hidden');
+            } else {
+                DOM.loadMore.classList.add('hidden');
+            }
+
+            updateApiStatus('success', `${source} (${state.lectures.length} lectures)`);
+        }
+
+        function renderSkeletons(count = 6) {
+            DOM.lectureContainer.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const skeleton = `
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-sky-100">
+                        <div class="skeleton aspect-video"></div>
+                        <div class="p-4">
+                            <div class="skeleton h-4 w-3/4 mb-2"></div>
+                            <div class="skeleton h-3 w-1/2"></div>
+                            <div class="mt-3 pt-3 border-t border-sky-50 flex justify-between">
+                                <div class="skeleton h-4 w-16"></div>
+                                <div class="skeleton h-4 w-12"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                DOM.lectureContainer.insertAdjacentHTML('beforeend', skeleton);
+            }
+        }
+
+        // ==================== VIEW MODE ====================
+        function setView(mode) {
+            state.viewMode = mode;
+            document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+            DOM.lectureContainer.className = mode === 'grid' 
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' 
+                : 'flex flex-col gap-4';
+            // Re-render with current data
+            if (state.lectures.length > 0) {
+                renderLectures(state.lectures, state.source, false);
+            }
+        }
+
+        // ==================== LOAD MORE ====================
+        function loadMore() {
+            if (state.isLoading || !state.hasMore) return;
+            state.currentPage++;
+            loadLectures(true);
+        }
+
+        // ==================== SEARCH ====================
+        const debouncedSearch = debounce(() => {
+            const query = DOM.searchInput.value.trim().toLowerCase();
+            state.searchQuery = query;
+            if (query) {
+                const filtered = state.lectures.filter(lecture => 
+                    lecture.title.toLowerCase().includes(query) ||
+                    lecture.description?.toLowerCase().includes(query) ||
+                    lecture.chapter?.toLowerCase().includes(query)
+                );
+                renderLectures(filtered, `${state.source} (Filtered)`, false);
+            } else {
+                renderLectures(state.lectures, state.source, false);
+            }
+        }, 300);
+
+        DOM.searchInput.addEventListener('input', debouncedSearch);
+
+        // ==================== OPEN LECTURE ====================
+        function openLecture(videoId) {
+            const { batchId, subjectId, topicId } = getQueryParams();
+            const title = state.lectures.find(l => l.id === videoId)?.title || 'Lecture';
+            const url = `player.html?video_id=${videoId}&batch_id=${batchId}&subject_id=${subjectId}&topic_id=${topicId}&title=${encodeURIComponent(title)}`;
+            window.location.href = url;
+        }
+
+        // ==================== REFRESH ====================
+        function refreshLectures() {
+            state.currentPage = 1;
+            state.lectures = [];
+            state.currentApiIndex = 0;
+            DOM.lectureContainer.innerHTML = '';
+            loadLectures(false);
+            // Add refresh animation
+            document.querySelector('.refresh-indicator').style.animation = 'spin 0.5s linear';
+            setTimeout(() => {
+                document.querySelector('.refresh-indicator').style.animation = '';
+            }, 500);
+        }
+
+        // ==================== LOAD LECTURES ====================
+        async function loadLectures(append = false) {
+            if (state.isLoading) return;
+            state.isLoading = true;
+
+            const { batchId, subjectId, topicId } = getQueryParams();
+            state.batchId = batchId;
+            state.subjectId = subjectId;
+            state.topicId = topicId;
+
+            if (!batchId || !subjectId || !topicId) {
+                DOM.loading.classList.add('hidden');
+                DOM.error.classList.remove('hidden');
+                DOM.errorMessage.textContent = 'Missing required parameters. Please check the URL.';
+                state.isLoading = false;
+                return;
+            }
+
+            // Check cache
+            if (!append && state.currentPage === 1) {
+                const cached = getFromCache();
+                if (cached && cached.length > 0) {
+                    console.log('📦 Using cached data');
+                    state.lectures = cached;
+                    renderLectures(cached, 'Cache', false);
+                    state.isLoading = false;
+                    return;
+                }
+            }
+
+            if (!append) {
+                DOM.loading.classList.remove('hidden');
+                DOM.error.classList.add('hidden');
+                DOM.grid.classList.add('hidden');
+                renderSkeletons();
+            }
+
+            const endpoints = CONFIG.endpoints.map(e => ({
+                ...e,
+                url: e.url(batchId, subjectId, topicId)
+            }));
+
+            let success = false;
+
+            for (let i = 0; i < endpoints.length; i++) {
+                const endpoint = endpoints[i];
+                updateApiStatus('loading', `Trying ${endpoint.name}...`);
+                
+                try {
+                    console.log(`🔄 Trying ${endpoint.name}: ${endpoint.url}`);
+                    
+                    const response = await fetch(endpoint.url, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Extract lectures from response
+                    let lectures = [];
+                    if (data.data && Array.isArray(data.data)) {
+                        lectures = data.data;
+                    } else if (data.lectures && Array.isArray(data.lectures)) {
+                        lectures = data.lectures;
+                    } else if (data.items && Array.isArray(data.items)) {
+                        lectures = data.items;
+                    } else if (Array.isArray(data)) {
+                        lectures = data;
+                    }
+
+                    if (lectures && lectures.length > 0) {
+                        // Standardize lecture format
+                        lectures = lectures.map(item => ({
+                            id: item._id || item.id || item.videoId || item.video_id,
+                            title: item.topic || item.title || item.name || 'Untitled',
+                            description: item.description || item.videoDetails?.description || '',
+                            thumbnail: item.videoDetails?.image || item.image || item.thumbnail || '',
+                            duration: item.duration || item.videoDetails?.duration || '0:00',
+                            chapter: item.chapter || item.chapterName || '',
+                            isFree: item.isFree || item.free || false,
+                            views: item.views || item.viewCount || 0
+                        })).filter(l => l.id);
+
+                        state.source = endpoint.name;
+                        renderLectures(lectures, endpoint.name, append);
+                        saveToCache(state.lectures);
+                        success = true;
+                        break;
+                    }
+
+                } catch (error) {
+                    console.warn(`❌ ${endpoint.name} failed:`, error.message);
+                    continue;
+                }
+            }
+
+            if (!success) {
+                DOM.loading.classList.add('hidden');
+                DOM.error.classList.remove('hidden');
+                DOM.errorMessage.textContent = 'All lecture sources failed. Please try again later.';
+                updateApiStatus('error', 'All sources failed');
+            }
+
+            state.isLoading = false;
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', (e) => {
+            // 'r' for refresh
+            if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                refreshLectures();
+            }
+            // 'g' for grid view
+            if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                setView('grid');
+            }
+            // 'l' for list view
+            if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                setView('list');
+            }
+            // '/' for search focus
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                DOM.searchInput.focus();
+            }
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                DOM.searchInput.blur();
+                DOM.searchInput.value = '';
+                debouncedSearch();
+            }
+        });
+
+        // ==================== INIT ====================
+        window.addEventListener('load', () => {
+            console.log('🚀 Enhanced Lectures loaded');
+            console.log('📋 URL Params:', getQueryParams());
+            console.log('⌨️ Keyboard shortcuts: r=refresh, g=grid, l=list, /=search, Esc=clear');
+            
+            setTimeout(() => loadLectures(false), 300);
+        });
+
+        // Expose functions globally
+        window.refreshLectures = refreshLectures;
+        window.loadMore = loadMore;
+        window.setView = setView;
+        window.openLecture = openLecture;
+        window.clearCache = clearCache;
     </script>
 </body>
 </html>
