@@ -2,7 +2,7 @@ export default async function handler(req, res) {
     const { batchId, subjectId, contentType, topicId, tag } = req.query;
 
     
-    const targetUrl = `https://pw.studypanda.site/api/TopicInfo?BatchId=${batchId}&SubjectId=${subjectId}&TopicId=${topicId || tag || ''}&ContentType=${contentType}&page=1`;
+    const targetUrl = `https://pwthor.live/api/TopicInfo?BatchId=${batchId}&SubjectId=${subjectId}&TopicId=${topicId || tag || ''}&ContentType=${contentType}&page=1`;
 
     try {
         const response = await fetch(targetUrl);
