@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
     const { batchId, subjectId, contentType, topicId, tag } = req.query;
 
-    // CHANGE THIS - use the working devcoderz-player API instead
-    const targetUrl = `https://devcoderz-player.vercel.app/api/lectures?batchId=${batchId}&subjectId=${subjectId}&contentType=${contentType || 'videos'}&tag=${topicId || tag || ''}&page=1`;
+    
+    const targetUrl = `https://pw.studypanda.site/api/TopicInfo?BatchId=${batchId}&SubjectId=${subjectId}&TopicId=${topicId || tag || ''}&ContentType=${contentType}&page=1`;
 
     try {
         const response = await fetch(targetUrl);
