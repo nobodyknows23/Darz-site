@@ -2,7 +2,14 @@
   "name": "darzwallah",
   "version": "1.0.0",
   "description": "PW Mod Website",
+  "main": "api/all-batches-api4.js",
+  "scripts": {
+    "build": "echo 'Build complete'"
+  },
   "engines": {
     "node": "18.x"
+  },
+  "dependencies": {
+    "@vercel/node": "^2.0.0"
   }
 }
