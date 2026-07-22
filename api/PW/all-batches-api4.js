@@ -17,10 +17,7 @@ export default async function handler(req, res) {
         });
     }
 
-    // Use tag or chapterSlug
     const searchTag = tag || chapterSlug || '';
-
-    // Build URL
     let targetUrl = `https://thestudyspark.site/api-server/v2/batches/${batchId}/subject/${subjectId}/content?page=1&contentType=${contentType || 'videos'}`;
     
     if (searchTag) {
@@ -53,8 +50,6 @@ export default async function handler(req, res) {
         }
 
         const data = await response.json();
-        
-        // Extract videos
         let videos = data?.data || data?.videos || data?.contents || [];
         
         if (!Array.isArray(videos) && videos && typeof videos === 'object') {

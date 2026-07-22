@@ -1,6 +1,7 @@
 {
   "name": "darzwallah",
   "version": "1.0.0",
+  "description": "PW Mod Website",
   "engines": {
     "node": "18.x"
   }
