@@ -10,72 +10,68 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
+    // Validate required params
     if (!batchId || !subjectId) {
         return res.status(400).json({ 
             success: false,
-            error: "Required parameters: batchId and subjectId" 
+            error: "Required parameters: batchId and subjectId",
+            debug: { batchId, subjectId }
         });
     }
 
     try {
-        // First try the working API from your network logs
-        let targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/topics?page=1`;
-        console.log('🔄 Fetching topics from:', targetUrl);
+        console.log('📥 Request received:', { batchId, subjectId, chapterSlug, chapterName });
 
-        let response = await fetch(targetUrl, {
+        // ============================================================
+        // STEP 1: Fetch topics for this subject
+        // ============================================================
+        const topicsUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/topics?page=1`;
+        console.log('🔄 Fetching topics from:', topicsUrl);
+
+        const topicsResponse = await fetch(topicsUrl, {
             headers: {
                 'accept': '*/*',
                 'accept-language': 'en-US,en;q=0.9',
+                'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
                 'Referer': 'https://studypanda.site/',
                 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36'
             }
         });
 
-        // Check if response is JSON or HTML
-        const contentType = response.headers.get('content-type') || '';
+        if (!topicsResponse.ok) {
+            throw new Error(`Topics API returned ${topicsResponse.status}`);
+        }
+
+        // Check if response is JSON
+        const topicsContentType = topicsResponse.headers.get('content-type') || '';
         let topicsData;
 
-        if (contentType.includes('application/json')) {
-            topicsData = await response.json();
+        if (topicsContentType.includes('application/json')) {
+            topicsData = await topicsResponse.json();
         } else {
-            // If not JSON, it might be HTML error page
-            console.log('⚠️ Received non-JSON response, trying alternative API...');
+            const text = await topicsResponse.text();
+            console.log('⚠️ Topics API returned HTML, trying to extract data...');
             
-            // Try alternative API endpoint from your logs
-            const altUrl = `https://studypanda.site/study/batches/${batchId}/subject/${subjectId}/topics?page=1&_rsc=1`;
-            console.log('🔄 Trying alternative:', altUrl);
-            
-            const altResponse = await fetch(altUrl, {
-                headers: {
-                    'accept': '*/*',
-                    'rsc': '1',
-                    'Referer': 'https://studypanda.site/',
-                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36'
-                }
-            });
-            
-            const altText = await altResponse.text();
-            
-            // Try to extract JSON from the response
-            try {
-                // Look for JSON in the response
-                const jsonMatch = altText.match(/\{.*\}/s);
-                if (jsonMatch) {
+            // Try to extract JSON from HTML
+            const jsonMatch = text.match(/\{[^{]*"data"[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
                     topicsData = JSON.parse(jsonMatch[0]);
-                } else {
-                    throw new Error('No JSON found in response');
+                } catch (e) {
+                    throw new Error('Could not parse topics data');
                 }
-            } catch (e) {
-                throw new Error('Failed to get topics data from both APIs');
+            } else {
+                throw new Error('Topics API returned HTML instead of JSON');
             }
         }
 
-        // Extract topics from response
+        // Extract topics array
         let topics = topicsData?.data || topicsData?.topics || topicsData;
         
         if (!Array.isArray(topics)) {
             if (topics && typeof topics === 'object') {
-                // Try to find array in object
                 for (const key of Object.keys(topics)) {
                     if (Array.isArray(topics[key])) {
                         topics = topics[key];
@@ -98,82 +94,105 @@ export default async function handler(req, res) {
             });
         }
 
-        // Find matching topic
+        // ============================================================
+        // STEP 2: Find matching topic
+        // ============================================================
         let foundTopic = null;
         const searchSlug = chapterSlug ? chapterSlug.toLowerCase().replace(/-/g, '') : '';
         const searchName = chapterName ? chapterName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
 
-        // Try to find by slug first
+        console.log('🔍 Searching for topic:', { searchSlug, searchName });
+
+        // Try exact match first
         for (const topic of topics) {
             const topicSlug = (topic.slug || topic.name || topic.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             const topicName = (topic.name || topic.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             
-            if (searchSlug && (topicSlug.includes(searchSlug) || searchSlug.includes(topicSlug))) {
+            if (searchSlug && (topicSlug === searchSlug || topicSlug.includes(searchSlug) || searchSlug.includes(topicSlug))) {
                 foundTopic = topic;
+                console.log('✅ Found by slug match:', topic.name || topic.title);
                 break;
             }
-            if (searchName && topicName.includes(searchName)) {
+            if (searchName && (topicName === searchName || topicName.includes(searchName) || searchName.includes(topicName))) {
                 foundTopic = topic;
+                console.log('✅ Found by name match:', topic.name || topic.title);
                 break;
             }
         }
 
-        // If not found, try by name match
+        // If not found, try partial match
         if (!foundTopic && chapterName) {
             const searchTerms = chapterName.toLowerCase().split(' ');
+            let bestMatch = null;
+            let bestScore = 0;
+
             for (const topic of topics) {
                 const topicName = (topic.name || topic.title || '').toLowerCase();
-                let matchCount = 0;
+                let score = 0;
                 for (const term of searchTerms) {
                     if (term.length > 2 && topicName.includes(term)) {
-                        matchCount++;
+                        score++;
                     }
                 }
-                if (matchCount >= searchTerms.length * 0.5) {
-                    foundTopic = topic;
-                    break;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = topic;
                 }
+            }
+
+            if (bestMatch && bestScore >= searchTerms.length * 0.3) {
+                foundTopic = bestMatch;
+                console.log('✅ Found by partial match:', bestMatch.name || bestMatch.title, 'Score:', bestScore);
             }
         }
 
-        // If still not found, use first topic
+        // If still not found, use first topic as fallback
         if (!foundTopic) {
-            console.log('⚠️ Topic not found, using first topic as fallback');
+            console.log('⚠️ No matching topic found, using first topic as fallback');
             foundTopic = topics[0];
         }
 
         const topicId = foundTopic._id || foundTopic.id || foundTopic.topicId;
-        console.log('🎯 Found topic:', foundTopic.name || foundTopic.title, 'ID:', topicId);
+        const topicName = foundTopic.name || foundTopic.title || chapterName || 'Chapter';
+        console.log('🎯 Selected topic:', topicName, 'ID:', topicId);
 
-        // Fetch videos
+        // ============================================================
+        // STEP 3: Fetch videos for this topic
+        // ============================================================
         const videosUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/contents?tag=${topicId}&contentType=${contentType || 'videos'}&page=1`;
-        console.log('🔄 Fetching videos:', videosUrl);
+        console.log('🔄 Fetching videos from:', videosUrl);
 
         const videosResponse = await fetch(videosUrl, {
             headers: {
                 'accept': '*/*',
+                'accept-language': 'en-US,en;q=0.9',
+                'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
                 'Referer': 'https://studypanda.site/',
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36'
             }
         });
 
         let videos = [];
-        const videoContentType = videosResponse.headers.get('content-type') || '';
+        const videosContentType = videosResponse.headers.get('content-type') || '';
 
-        if (videoContentType.includes('application/json')) {
+        if (videosResponse.ok && videosContentType.includes('application/json')) {
             const videosData = await videosResponse.json();
             videos = videosData.data || videosData.contents || videosData.videos || videosData;
         } else {
-            console.log('⚠️ Videos API returned non-JSON, trying to extract data...');
-            const videoText = await videosResponse.text();
-            try {
-                const jsonMatch = videoText.match(/\{.*\}/s);
-                if (jsonMatch) {
+            const text = await videosResponse.text();
+            console.log('⚠️ Videos API returned non-JSON, trying to extract...');
+            
+            // Try to extract JSON
+            const jsonMatch = text.match(/\{[^{]*"data"[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
                     const videosData = JSON.parse(jsonMatch[0]);
                     videos = videosData.data || videosData.contents || videosData.videos || videosData;
+                } catch (e) {
+                    console.log('Could not parse videos data');
                 }
-            } catch (e) {
-                console.log('Could not extract video data');
             }
         }
 
@@ -193,12 +212,15 @@ export default async function handler(req, res) {
 
         console.log(`📺 Found ${videos.length} videos`);
 
-        // Format videos for frontend
+        // ============================================================
+        // STEP 4: Format response
+        // ============================================================
         const formattedVideos = videos.map(video => ({
             title: video.title || video.name || video.videoTitle || 'Lecture',
             url: video.url || video.videoUrl || video.link || video.video || '',
             thumbnail: video.thumbnail || video.thumb || video.image || '',
-            duration: video.duration || video.videoDuration || ''
+            duration: video.duration || video.videoDuration || '',
+            description: video.description || video.desc || ''
         }));
 
         return res.status(200).json({
@@ -206,12 +228,13 @@ export default async function handler(req, res) {
             data: formattedVideos,
             topic: {
                 id: topicId,
-                name: foundTopic.name || foundTopic.title || chapterName || 'Chapter'
+                name: topicName
             },
             credits: "Developed by The Unknown",
             debug: {
-                topicsCount: topics.length,
-                videosCount: formattedVideos.length
+                topicsFound: topics.length,
+                videosFound: formattedVideos.length,
+                topicId: topicId
             }
         });
 
@@ -223,7 +246,8 @@ export default async function handler(req, res) {
             debug: {
                 batchId,
                 subjectId,
-                chapterSlug
+                chapterSlug,
+                chapterName
             }
         });
     }
