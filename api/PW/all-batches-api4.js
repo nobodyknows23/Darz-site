@@ -1,4 +1,6 @@
 export default async function handler(req, res) {
+    const { batch_id, subject_id, chapter_id, topic_id, chapter_slug } = req.query;
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,75 +10,83 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const { batchId, subjectId, contentType, tag, chapterSlug } = req.query;
-
-    if (!batchId || !subjectId) {
+    // Validate required parameters
+    if (!batch_id || !subject_id) {
         return res.status(400).json({ 
             success: false,
-            error: "Missing required: batchId and subjectId" 
+            error: "Required: batch_id and subject_id"
         });
     }
 
-    const searchTag = tag || chapterSlug || '';
-    let targetUrl = `https://thestudyspark.site/api-server/v2/batches/${batchId}/subject/${subjectId}/content?page=1&contentType=${contentType || 'videos'}`;
-    
-    if (searchTag) {
-        targetUrl += `&tag=${searchTag}`;
+    // Need chapter_id or topic_id to get lectures
+    const chapterId = chapter_id || topic_id;
+    if (!chapterId) {
+        return res.status(400).json({ 
+            success: false,
+            error: "Required: chapter_id or topic_id"
+        });
     }
 
-    console.log('🔄 Fetching:', targetUrl);
-
     try {
+        // ============================================================
+        // DIRECTLY FETCH LECTURES FOR THIS CHAPTER/TOPIC
+        // ============================================================
+        // Using the working API from your network logs
+        const targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batch_id}/subject/${subject_id}/contents?tag=${chapterId}&contentType=videos&page=1`;
+        console.log('🔄 Fetching lectures:', targetUrl);
+
         const response = await fetch(targetUrl, {
             headers: {
-                "User-Agent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36",
-                "Referer": "https://pw.live/",
-                "Accept": "application/json"
+                'accept': '*/*',
+                'Referer': 'https://studypanda.site/',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36'
             }
         });
 
-        if (response.status === 429) {
-            return res.status(429).json({ 
-                success: false,
-                error: "Rate limit exceeded" 
-            });
-        }
-
         if (!response.ok) {
-            return res.status(response.status).json({ 
-                success: false,
-                error: `API error: ${response.status}` 
-            });
+            throw new Error(`API error: ${response.status}`);
         }
 
         const data = await response.json();
-        let videos = data?.data || data?.videos || data?.contents || [];
         
-        if (!Array.isArray(videos) && videos && typeof videos === 'object') {
-            for (const key of Object.keys(videos)) {
-                if (Array.isArray(videos[key])) {
-                    videos = videos[key];
-                    break;
+        // Extract lectures/videos from response
+        let lectures = data?.data || data?.contents || data?.videos || data || [];
+
+        // Ensure lectures is an array
+        if (!Array.isArray(lectures)) {
+            if (lectures && typeof lectures === 'object') {
+                for (const key of Object.keys(lectures)) {
+                    if (Array.isArray(lectures[key])) {
+                        lectures = lectures[key];
+                        break;
+                    }
                 }
             }
-        }
-        
-        if (!Array.isArray(videos)) {
-            videos = [];
+            if (!Array.isArray(lectures)) {
+                lectures = [];
+            }
         }
 
-        const formattedVideos = videos.map(video => ({
-            title: video.title || video.name || video.videoTitle || 'Lecture',
-            url: video.url || video.videoUrl || video.link || video.video || '',
-            thumbnail: video.thumbnail || video.thumb || video.image || '',
-            duration: video.duration || video.videoDuration || '',
-            description: video.description || video.desc || ''
+        console.log(`📺 Found ${lectures.length} lectures`);
+
+        // ============================================================
+        // FORMAT LECTURES FOR player.js
+        // ============================================================
+        const formattedLectures = lectures.map((lecture, index) => ({
+            id: lecture._id || lecture.id || lecture.video_id || `lecture_${index}`,
+            title: lecture.title || lecture.name || lecture.video_title || `Lecture ${index + 1}`,
+            url: lecture.url || lecture.video_url || lecture.link || lecture.video || '',
+            thumbnail: lecture.thumbnail || lecture.thumb || lecture.image || '',
+            duration: lecture.duration || lecture.video_duration || '',
+            description: lecture.description || lecture.desc || '',
+            order: lecture.order || lecture.sequence || index + 1
         }));
 
         return res.status(200).json({
             success: true,
-            data: formattedVideos,
-            count: formattedVideos.length,
+            data: formattedLectures,
+            count: formattedLectures.length,
+            chapter_id: chapterId,
             credits: "Developed by The Unknown"
         });
 
@@ -84,8 +94,7 @@ export default async function handler(req, res) {
         console.error('❌ Error:', error.message);
         return res.status(500).json({ 
             success: false,
-            error: "Internal Server Error",
-            details: error.message 
+            error: error.message || "Failed to fetch lectures"
         });
     }
 }
