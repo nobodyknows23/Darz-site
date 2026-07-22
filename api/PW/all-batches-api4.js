@@ -8,7 +8,7 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const { batchId, subjectId, contentType, tag } = req.query;
+    const { batchId, subjectId, contentType, tag, chapterSlug } = req.query;
 
     if (!batchId || !subjectId) {
         return res.status(400).json({ 
@@ -17,11 +17,14 @@ export default async function handler(req, res) {
         });
     }
 
-    // Build the URL
+    // Use tag or chapterSlug
+    const searchTag = tag || chapterSlug || '';
+
+    // Build URL
     let targetUrl = `https://thestudyspark.site/api-server/v2/batches/${batchId}/subject/${subjectId}/content?page=1&contentType=${contentType || 'videos'}`;
     
-    if (tag) {
-        targetUrl += `&tag=${tag}`;
+    if (searchTag) {
+        targetUrl += `&tag=${searchTag}`;
     }
 
     console.log('🔄 Fetching:', targetUrl);
@@ -51,7 +54,7 @@ export default async function handler(req, res) {
 
         const data = await response.json();
         
-        // Extract videos from response
+        // Extract videos
         let videos = data?.data || data?.videos || data?.contents || [];
         
         if (!Array.isArray(videos) && videos && typeof videos === 'object') {
@@ -67,7 +70,6 @@ export default async function handler(req, res) {
             videos = [];
         }
 
-        // Format videos
         const formattedVideos = videos.map(video => ({
             title: video.title || video.name || video.videoTitle || 'Lecture',
             url: video.url || video.videoUrl || video.link || video.video || '',
