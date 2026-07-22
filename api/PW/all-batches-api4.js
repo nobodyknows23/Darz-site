@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-    const { batchId, subjectId, contentType, topicId, tag } = req.query;
+    const { batchId, subjectId, contentType, chapterSlug, chapterName } = req.query;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -10,128 +10,138 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    if (!batchId) {
+    if (!batchId || !subjectId) {
         return res.status(400).json({ 
-            error: "Required parameter 'batchId' missing." 
+            success: false,
+            error: "Required parameters: batchId and subjectId" 
         });
     }
 
     try {
-        // Use the WORKING API endpoints from your network logs
         let targetUrl = '';
-        let responseData = null;
+        let videos = [];
 
-        // Determine which endpoint to use based on parameters
-        if (topicId || tag) {
-            // For videos/contents (from your network logs)
-            targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/contents?tag=${topicId || tag}&contentType=${contentType || 'videos'}&page=1`;
-        } else if (subjectId) {
-            // For topics (from your network logs)
-            targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/topics?page=1`;
-        } else {
-            // For batch details (from your network logs)
-            targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/details`;
-        }
+        // Step 1: Get all topics for this subject
+        const topicsUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/topics?page=1`;
+        console.log('🔄 Fetching topics:', topicsUrl);
 
-        console.log('🔄 Fetching from:', targetUrl);
-
-        const response = await fetch(targetUrl, {
+        const topicsResponse = await fetch(topicsUrl, {
             headers: {
                 'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9',
-                'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"',
-                'sec-ch-ua-mobile': '?1',
-                'sec-ch-ua-platform': '"Android"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'cross-site',
                 'Referer': 'https://studypanda.site/',
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36'
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`API returned ${response.status}`);
+        if (!topicsResponse.ok) {
+            throw new Error(`Topics API returned ${topicsResponse.status}`);
         }
 
-        const data = await response.json();
+        const topicsData = await topicsResponse.json();
+        let topics = topicsData.data || topicsData.topics || topicsData;
 
-        // Transform data to match expected format (like wasmer API)
-        if (data.data) {
-            responseData = data.data;
-        } else if (data.topics) {
-            responseData = data.topics;
-        } else if (data.contents) {
-            responseData = data.contents;
-        } else {
-            responseData = data;
+        // Ensure topics is an array
+        if (!Array.isArray(topics)) {
+            if (topics && typeof topics === 'object') {
+                for (const key of Object.keys(topics)) {
+                    if (Array.isArray(topics[key])) {
+                        topics = topics[key];
+                        break;
+                    }
+                }
+            }
+            if (!Array.isArray(topics)) {
+                topics = [];
+            }
         }
+
+        console.log(`📚 Found ${topics.length} topics`);
+
+        // Step 2: Find the matching topic
+        let foundTopic = null;
+        const searchSlug = chapterSlug ? chapterSlug.toLowerCase().replace(/-/g, '') : '';
+        const searchName = chapterName ? chapterName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+
+        for (const topic of topics) {
+            const topicSlug = (topic.slug || topic.name || topic.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const topicName = (topic.name || topic.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            if (searchSlug && (topicSlug.includes(searchSlug) || searchSlug.includes(topicSlug))) {
+                foundTopic = topic;
+                break;
+            }
+            if (searchName && topicName.includes(searchName)) {
+                foundTopic = topic;
+                break;
+            }
+        }
+
+        if (!foundTopic) {
+            console.log('❌ Topic not found, using first topic as fallback');
+            foundTopic = topics[0];
+        }
+
+        if (!foundTopic) {
+            return res.status(404).json({
+                success: false,
+                error: 'No topics found for this subject'
+            });
+        }
+
+        const topicId = foundTopic._id || foundTopic.id || foundTopic.topicId;
+        console.log('🎯 Found topic:', foundTopic.name || foundTopic.title, 'ID:', topicId);
+
+        // Step 3: Fetch videos for this topic
+        targetUrl = `https://jitu.iownprince5.workers.dev/api/batch/${batchId}/subject/${subjectId}/contents?tag=${topicId}&contentType=${contentType || 'videos'}&page=1`;
+        console.log('🔄 Fetching videos:', targetUrl);
+
+        const videosResponse = await fetch(targetUrl, {
+            headers: {
+                'accept': '*/*',
+                'Referer': 'https://studypanda.site/',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36'
+            }
+        });
+
+        if (!videosResponse.ok) {
+            throw new Error(`Videos API returned ${videosResponse.status}`);
+        }
+
+        const videosData = await videosResponse.json();
+        videos = videosData.data || videosData.contents || videosData.videos || videosData;
+
+        if (!Array.isArray(videos)) {
+            if (videos && typeof videos === 'object') {
+                for (const key of Object.keys(videos)) {
+                    if (Array.isArray(videos[key])) {
+                        videos = videos[key];
+                        break;
+                    }
+                }
+            }
+            if (!Array.isArray(videos)) {
+                videos = [];
+            }
+        }
+
+        console.log(`📺 Found ${videos.length} videos`);
 
         return res.status(200).json({
             success: true,
-            data: responseData,
+            data: videos,
+            topic: {
+                id: topicId,
+                name: foundTopic.name || foundTopic.title || chapterName || 'Chapter'
+            },
             credits: "Developed by The Unknown",
             source: targetUrl
         });
 
     } catch (error) {
         console.error('❌ Error:', error.message);
-        
-        // FALLBACK: Try studypanda.site as a backup
-        try {
-            console.log('🔄 Attempting fallback to studypanda.site...');
-            
-            let fallbackUrl = `https://studypanda.site/study/batches/${batchId}`;
-            if (subjectId) {
-                fallbackUrl += `/subject/${subjectId}`;
-                if (topicId || tag) {
-                    fallbackUrl += `/topic/${topicId || tag}`;
-                }
-            }
-            fallbackUrl += '?_rsc=1';
-
-            const fallbackResponse = await fetch(fallbackUrl, {
-                headers: {
-                    'accept': '*/*',
-                    'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"',
-                    'sec-ch-ua-mobile': '?1',
-                    'sec-ch-ua-platform': '"Android"',
-                    'Referer': 'https://studypanda.site/',
-                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36'
-                }
-            });
-
-            const fallbackData = await fallbackResponse.text();
-            
-            // Try to parse as JSON if possible
-            try {
-                const jsonData = JSON.parse(fallbackData);
-                return res.status(200).json({
-                    success: true,
-                    data: jsonData,
-                    credits: "Developed by The Unknown (Fallback)",
-                    source: fallbackUrl
-                });
-            } catch {
-                // Return as HTML if not JSON
-                return res.status(200).json({
-                    success: true,
-                    data: {
-                        html: fallbackData.substring(0, 1000) + '...',
-                        note: 'HTML response from studypanda.site'
-                    },
-                    credits: "Developed by The Unknown (Fallback)"
-                });
-            }
-
-        } catch (fallbackError) {
-            console.error('❌ Fallback failed:', fallbackError.message);
-            return res.status(500).json({ 
-                success: false, 
-                error: "Failed to fetch data from both primary and fallback sources.",
-                details: error.message,
-                credits: "Developed by The Unknown"
-            });
-        }
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message || "Failed to fetch data"
+        });
     }
 }
