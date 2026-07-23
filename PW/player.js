@@ -87,7 +87,7 @@ console.log('📋 Video config loaded (decrypted OK):', !!mediaConfig.video_url)
 
 
 // ==================== TOKEN MANAGEMENT ====================
-const TOKEN_API_URL = './api/token-manager';
+const TOKEN_API_URL = '/api/token-manager';
 const TOKEN_BUNDLE_KEY = 'sr_token_bundle';
 const TOKEN_KEY = 'pw_auth_token'; // legacy fallback
 
