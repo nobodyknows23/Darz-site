@@ -1,488 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lecture Videos - PW Mod</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectures - Darz Wallah</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for better UX */
-        .video-card {
-            transition: all 0.3s ease;
-            background: rgba(24, 24, 27, 0.8);
-            backdrop-filter: blur(10px);
-        }
-        .video-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(52, 211, 153, 0.5);
-            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
-        }
-        .video-card .thumbnail-container {
-            position: relative;
-            overflow: hidden;
-            background: #18181b;
-        }
-        .video-card .thumbnail-container img {
-            transition: transform 0.5s ease;
-        }
-        .video-card:hover .thumbnail-container img {
-            transform: scale(1.05);
-        }
-        .video-card .play-button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            background: rgba(52, 211, 153, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-        }
-        .video-card:hover .play-button {
-            opacity: 1;
-        }
-        .video-card .duration-badge {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            backdrop-filter: blur(5px);
-        }
-        .loading-spinner {
-            border: 3px solid rgba(52, 211, 153, 0.1);
-            border-top-color: #34d399;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, #1a1a1e 25%, #27272a 50%, #1a1a1e 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #18181b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #34d399;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #2dd4bf;
-        }
-        /* Loading skeletons */
-        .skeleton-card {
-            background: #18181b;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid #27272a;
-        }
-        .skeleton-card .skeleton-thumb {
-            aspect-ratio: 16/9;
-            background: #27272a;
-        }
-        .skeleton-card .skeleton-title {
-            height: 20px;
-            background: #27272a;
-            margin: 16px 16px 8px;
-            border-radius: 4px;
-        }
-        .skeleton-card .skeleton-btn {
-            height: 40px;
-            background: #27272a;
-            margin: 8px 16px 16px;
-            border-radius: 8px;
-        }
-    </style>
+    <script src="player.js" defer></script>
+    <style> body { background-color: #f0f9ff; font-family: sans-serif; } </style>
 </head>
-<body class="bg-[#0a0a0a] text-white min-h-screen">
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-zinc-800/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-4">
-                    <a href="/PW/batches.html" class="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Back
-                    </a>
-                    <div class="h-6 w-px bg-zinc-700"></div>
-                    <h1 id="pageTitle" class="text-lg font-semibold text-white truncate max-w-[300px] sm:max-w-[500px]">
-                        Loading...
-                    </h1>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span id="videoCount" class="text-sm text-zinc-400"></span>
-                    <span class="px-3 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
-                        PW Mod
-                    </span>
-                </div>
-            </div>
-        </div>
+<body class="min-h-screen flex flex-col">
+
+    <nav class="bg-sky-500 p-4 text-white shadow-lg">
+        <h1 class="text-xl font-bold text-center">Lectures</h1>
     </nav>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Breadcrumb -->
-        <div class="flex items-center gap-2 text-sm text-zinc-400 mb-6">
-            <span>Home</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <span id="batchNameDisplay">Batch</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <span id="subjectNameDisplay">Subject</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <span id="chapterNameDisplay" class="text-emerald-400">Chapter</span>
-        </div>
-
-        <!-- Loading State -->
-        <div id="loading" class="text-center py-12">
-            <div class="loading-spinner mx-auto"></div>
-            <p class="mt-4 text-zinc-400">Loading lectures...</p>
-            <p class="text-xs text-zinc-600 mt-1" id="loadingStatus">Fetching video data</p>
-        </div>
-
-        <!-- Loading Skeletons -->
-        <div id="skeletons" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="skeleton-card">
-                <div class="skeleton-thumb skeleton"></div>
-                <div class="skeleton-title skeleton"></div>
-                <div class="skeleton-btn skeleton"></div>
-            </div>
-            <div class="skeleton-card">
-                <div class="skeleton-thumb skeleton"></div>
-                <div class="skeleton-title skeleton"></div>
-                <div class="skeleton-btn skeleton"></div>
-            </div>
-            <div class="skeleton-card">
-                <div class="skeleton-thumb skeleton"></div>
-                <div class="skeleton-title skeleton"></div>
-                <div class="skeleton-btn skeleton"></div>
-            </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="error" class="hidden bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
-            <div class="flex flex-col items-center">
-                <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-red-400 mb-2">Failed to Load Lectures</h3>
-                <p id="errorMessage" class="text-zinc-400 max-w-md">Unable to fetch lecture data. Please try again.</p>
-                <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors">
-                    Retry
-                </button>
-            </div>
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty" class="hidden text-center py-16">
-            <div class="flex flex-col items-center">
-                <div class="w-20 h-20 rounded-full bg-zinc-800/50 flex items-center justify-center mb-4">
-                    <svg class="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-zinc-300 mb-2">No Lectures Available</h3>
-                <p class="text-zinc-500">This chapter doesn't have any video lectures yet.</p>
-                <a href="/PW/batches.html" class="mt-6 text-emerald-400 hover:text-emerald-300 transition-colors">
-                    ← Browse other batches
-                </a>
-            </div>
-        </div>
-
-        <!-- Lectures Grid -->
-        <div id="lecturesContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    <div id="contentContainer" class="p-4 flex-grow">
+        <div class="text-center mt-20 text-sky-600 font-bold">Fetching official data...</div>
     </div>
 
-    <!-- Footer -->
-    <footer class="border-t border-zinc-800/50 mt-12 py-6">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-zinc-600">
-            <p>Developed by The Unknown</p>
-            <p class="text-xs mt-1">Data sourced from PW Study Platform</p>
-        </div>
+    <footer class="p-4 text-center text-sky-700 font-semibold text-sm bg-white border-t border-sky-100">
+        Developed by Unknown
     </footer>
 
     <script>
-        // ============================================================
-        // 1. Get URL Parameters
-        // ============================================================
-        const urlParams = new URLSearchParams(window.location.search);
-        const batchId = urlParams.get('batchId');
-        const batchName = urlParams.get('batchName') || 'Batch';
-        const subjectId = urlParams.get('subjectId');
-        const subjectName = urlParams.get('subjectName') || 'Subject';
-        const chapterSlug = urlParams.get('chapterSlug');
-        const chapterName = urlParams.get('chapterName') || chapterSlug?.replace(/-/g, ' ') || 'Chapter';
+        const params = new URLSearchParams(window.location.search);
+        
+        async function loadContent() {
+            const container = document.getElementById('contentContainer');
+            const bId = params.get("batchId");
+            const sId = params.get("subjectId");
+            const tag = params.get("tag");
 
-        // ============================================================
-        // 2. Update UI with Names
-        // ============================================================
-        document.getElementById('pageTitle').textContent = `${chapterName}`;
-        document.getElementById('batchNameDisplay').textContent = batchName;
-        document.getElementById('subjectNameDisplay').textContent = subjectName;
-        document.getElementById('chapterNameDisplay').textContent = chapterName;
-
-        // ============================================================
-        // 3. DOM Elements
-        // ============================================================
-        const loading = document.getElementById('loading');
-        const skeletons = document.getElementById('skeletons');
-        const error = document.getElementById('error');
-        const errorMessage = document.getElementById('errorMessage');
-        const empty = document.getElementById('empty');
-        const lecturesContainer = document.getElementById('lecturesContainer');
-        const videoCount = document.getElementById('videoCount');
-        const loadingStatus = document.getElementById('loadingStatus');
-
-        // ============================================================
-        // 4. Main Fetch Function
-        // ============================================================
-// In your lectures.html, update the API call
-async function fetchLectures() {
-    try {
-        // Show loading
-        loading.classList.remove('hidden');
-        error.classList.add('hidden');
-        lecturesContainer.classList.add('hidden');
-
-        // Build API URL - NOW USING THE NEW API
-        let apiUrl = `/api/all-batches-api4?batchId=${batchId}&subjectId=${subjectId}&contentType=videos`;
-
-        // If chapterSlug exists, use it as tag
-        if (chapterSlug) {
-            apiUrl += `&tag=${encodeURIComponent(chapterSlug)}`;
-        }
-
-        console.log('🔄 Fetching:', apiUrl);
-
-        const response = await fetch(apiUrl, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.error('❌ Response error:', response.status, text);
-            throw new Error(`Server error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('📦 Response:', data);
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to fetch lectures');
-        }
-
-        // Extract videos - handle different response formats
-        let videos = data.data || data.videos || data.contents || [];
-
-        if (!Array.isArray(videos)) {
-            if (videos && typeof videos === 'object') {
-                for (const key of Object.keys(videos)) {
-                    if (Array.isArray(videos[key])) {
-                        videos = videos[key];
-                        break;
-                    }
-                }
-            }
-            if (!Array.isArray(videos)) {
-                videos = [];
-            }
-        }
-
-        console.log(`📺 Found ${videos.length} videos`);
-
-        // Hide loading
-        loading.classList.add('hidden');
-
-        if (videos.length === 0) {
-            empty.classList.remove('hidden');
-            return;
-        }
-
-        // Display videos
-        displayLectures(videos);
-
-    } catch (err) {
-        console.error('❌ Error:', err);
-        loading.classList.add('hidden');
-        error.classList.remove('hidden');
-        errorMessage.textContent = err.message || 'Failed to load lectures. Please try again.';
-    }
-}
-        // ============================================================
-        // 5. Display Lectures
-        // ============================================================
-        function displayLectures(videos) {
-            lecturesContainer.classList.remove('hidden');
-            lecturesContainer.innerHTML = '';
-
-            videos.forEach((video, index) => {
-                // Extract video info
-                const title = video.title || video.name || video.videoTitle || `Lecture ${index + 1}`;
-                const videoUrl = video.url || video.videoUrl || video.link || video.video || '';
-                const thumbnail = video.thumbnail || video.thumb || video.image || '';
-                const duration = video.duration || video.videoDuration || '';
-                const description = video.description || video.desc || '';
-
-                // Create card
-                const card = document.createElement('div');
-                card.className = 'video-card rounded-2xl overflow-hidden border border-zinc-800/50';
-
-                card.innerHTML = `
-                    <div class="thumbnail-container aspect-video bg-zinc-800">
-                        ${thumbnail ? `
-                            <img 
-                                src="${thumbnail}" 
-                                alt="${title}" 
-                                class="w-full h-full object-cover"
-                                loading="lazy"
-                                onerror="this.style.display='none'; this.parentElement.querySelector('.fallback-thumb').style.display='flex'"
-                            />
-                            <div class="fallback-thumb hidden w-full h-full bg-zinc-800 items-center justify-center">
-                                <svg class="w-16 h-16 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                        ` : `
-                            <div class="w-full h-full bg-zinc-800 flex items-center justify-center">
-                                <svg class="w-16 h-16 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                        `}
-                        <div class="play-button">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </div>
-                        ${duration ? `<span class="duration-badge">${formatDuration(duration)}</span>` : ''}
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-sm text-white line-clamp-2 group-hover:text-emerald-400 transition-colors">
-                            ${title}
-                        </h3>
-                        ${description ? `<p class="text-xs text-zinc-500 mt-1 line-clamp-2">${description}</p>` : ''}
-                        ${videoUrl ? `
-                            <button 
-                                onclick="watchVideo('${videoUrl}')" 
-                                class="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
-                            >
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                </svg>
-                                Watch Lecture
-                            </button>
-                        ` : `
-                            <p class="mt-3 text-xs text-zinc-500 text-center">No video link available</p>
-                        `}
-                    </div>
-                `;
-
-                lecturesContainer.appendChild(card);
-            });
-        }
-
-        // ============================================================
-        // 6. Helper Functions
-        // ============================================================
-        function formatDuration(duration) {
-            // Handle various duration formats
-            if (!duration) return '';
-            
-            // If it's already formatted like "1h 30m" or "15m"
-            if (typeof duration === 'string' && duration.match(/[0-9]+[hms]/)) {
-                return duration;
-            }
-
-            // If it's seconds
-            if (typeof duration === 'number' || !isNaN(duration)) {
-                const seconds = parseInt(duration);
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = seconds % 60;
+            try {
+                // 1. Pehle valid token lo (player.js mein define hai)
+                const token = await getValidToken(); 
                 
-                if (hours > 0) {
-                    return `${hours}h ${minutes}m`;
-                }
-                if (minutes > 0) {
-                    return `${minutes}m ${secs}s`;
-                }
-                return `${secs}s`;
-            }
+                // 2. Official Penpencil API call
+                const u = `https://api.penpencil.co/v2/batches/${bId}/subject/${sId}/contents?tag=${tag}&contentType=videos&page=1`;
+                
+                const res = await fetch(u, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Client-Type': 'WEB'
+                    }
+                });
+                
+                const json = await res.json();
 
-            return duration;
+                if (json.data && json.data.length > 0) {
+                    container.innerHTML = json.data.map(i => `
+                        <div class="bg-white p-4 mb-3 rounded-2xl shadow-md border border-sky-100 flex items-center gap-4 cursor-pointer hover:bg-sky-50" 
+                             onclick="window.location.href='player.html?videoId=${i._id}'">
+                            ${i.videoDetails?.image ? `<img src="${i.videoDetails.image}" class="w-20 h-16 rounded-xl object-cover shadow-sm">` : ''}
+                            <p class="font-bold text-sky-900 text-sm">${i.topic || "Untitled"}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-center mt-10 text-sky-500">No content found</p>';
+                }
+            } catch (e) {
+                container.innerHTML = '<p class="text-center mt-10 text-red-500">Error loading data.</p>';
+            }
         }
-
-        function watchVideo(url) {
-            // Open in new tab
-            window.open(url, '_blank');
-        }
-
-        // ============================================================
-        // 7. Auto-Retry on Error
-        // ============================================================
-        let retryCount = 0;
-        const maxRetries = 3;
-
-        window.addEventListener('load', () => {
-            // Check if required params exist
-            if (!batchId || !subjectId) {
-                loading.classList.add('hidden');
-                error.classList.remove('hidden');
-                errorMessage.textContent = 'Missing required parameters: batchId and subjectId';
-                return;
-            }
-
-            fetchLectures();
-        });
-
-        // Retry logic
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#retryBtn') || e.target.closest('button[onclick="location.reload()"]')) {
-                retryCount++;
-                if (retryCount <= maxRetries) {
-                    loadingStatus.textContent = `Retry ${retryCount} of ${maxRetries}...`;
-                    fetchLectures();
-                }
-            }
-        });
-
-        console.log('✅ Lectures page loaded');
-        console.log('📊 Params:', { batchId, batchName, subjectId, subjectName, chapterSlug, chapterName });
+        
+        // Wait for player.js to load, then trigger
+        window.addEventListener('load', loadContent);
     </script>
 </body>
 </html>
