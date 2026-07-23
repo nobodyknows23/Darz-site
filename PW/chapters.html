@@ -66,10 +66,17 @@
             }
         }
 
-        function openLectures(tSlug, tName, tId) {
-            window.location.href = `./lectures.html?batchId=${bId}&batchName=${encodeURIComponent(bName)}&subjectId=${sId}&subjectSlug=${sSlug}&subjectName=${encodeURIComponent(sName)}&chapterSlug=${tSlug}&chapterName=${tName}`;
-        }
-
+     function openLectures(tSlug, tName, tId) {
+    window.location.href =
+        `./lectures.html?batchId=${bId}` +
+        `&batchName=${encodeURIComponent(bName)}` +
+        `&subjectId=${sId}` +
+        `&subjectSlug=${sSlug}` +
+        `&subjectName=${encodeURIComponent(sName)}` +
+        `&chapterSlug=${tSlug}` +
+        `&chapterName=${tName}` +
+        `&tag=${encodeURIComponent(tId)}`;
+}
         if (bId && sId) loadChapters();
     </script>
 </body>
