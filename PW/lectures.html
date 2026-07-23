@@ -1,71 +1,127 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lectures - Darz Wallah</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-<script src="player.js" defer></script>
-    <style> body { background-color: #f0f9ff; font-family: sans-serif; } </style>
+
+    <style>
+        body{
+            background:#f0f9ff;
+            font-family:sans-serif;
+        }
+    </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <nav class="bg-sky-500 p-4 text-white shadow-lg">
-        <h1 class="text-xl font-bold text-center">Lectures</h1>
-    </nav>
+<nav class="bg-sky-500 text-white p-4 shadow-lg">
+    <h1 class="text-center text-xl font-bold">Lectures</h1>
+</nav>
 
-    <div id="contentContainer" class="p-4 flex-grow">
-        <div class="text-center mt-20 text-sky-600 font-bold">Fetching official data...</div>
+<div id="contentContainer" class="flex-grow p-4">
+    <div class="text-center mt-20 text-sky-600 font-bold">
+        Loading lectures...
     </div>
+</div>
 
-    <footer class="p-4 text-center text-sky-700 font-semibold text-sm bg-white border-t border-sky-100">
-        Developed by Unknown
-    </footer>
+<footer class="p-4 text-center bg-white border-t">
+    Developed by Unknown
+</footer>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        
-        async function loadContent() {
-            const container = document.getElementById('contentContainer');
-            const bId = params.get("batchId");
-            const sId = params.get("subjectId");
-            const tag = params.get("tag");
+<script>
 
-            try {
-                // 1. Pehle valid token lo (player.js mein define hai)
-                const token = await getValidToken(); 
-                
-                // 2. Official Penpencil API call
-                const u = `https://api.penpencil.co/v2/batches/${bId}/subject/${sId}/contents?tag=${tag}&contentType=videos&page=1`;
-                
-                const res = await fetch(u, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Client-Type': 'WEB'
-                    }
-                });
-                
-                const json = await res.json();
+const params=new URLSearchParams(location.search);
 
-                if (json.data && json.data.length > 0) {
-                    container.innerHTML = json.data.map(i => `
-                        <div class="bg-white p-4 mb-3 rounded-2xl shadow-md border border-sky-100 flex items-center gap-4 cursor-pointer hover:bg-sky-50" 
-                             onclick="window.location.href='player.html?videoId=${i._id}'">
-                            ${i.videoDetails?.image ? `<img src="${i.videoDetails.image}" class="w-20 h-16 rounded-xl object-cover shadow-sm">` : ''}
-                            <p class="font-bold text-sky-900 text-sm">${i.topic || "Untitled"}</p>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p class="text-center mt-10 text-sky-500">No content found</p>';
-                }
-            } catch (e) {
-                container.innerHTML = '<p class="text-center mt-10 text-red-500">Error loading data.</p>';
-            }
+const batchId=params.get("batchId");
+const subjectId=params.get("subjectId");
+const tag=params.get("tag");
+
+async function loadContent(){
+
+    const container=document.getElementById("contentContainer");
+
+    if(!batchId || !subjectId){
+
+        container.innerHTML="<p class='text-center text-red-500'>Missing batchId or subjectId</p>";
+        return;
+    }
+
+    const url=
+    `https://darzwallah-playerv1.vercel.app/api/lectures?`+
+    `batchId=${encodeURIComponent(batchId)}`+
+    `&subjectId=${encodeURIComponent(subjectId)}`+
+    `&contentType=videos`+
+    `&tag=${encodeURIComponent(tag||"")}`+
+    `&page=1`;
+
+    console.log(url);
+
+    try{
+
+        const res=await fetch(url);
+        const json=await res.json();
+
+        console.log(json);
+
+        const lectures=json.data || [];
+
+        if(!lectures.length){
+
+            container.innerHTML="<p class='text-center mt-10 text-sky-600'>No lectures found.</p>";
+            return;
         }
-        
-        // Wait for player.js to load, then trigger
-        window.addEventListener('load', loadContent);
-    </script>
+
+        container.innerHTML=lectures.map(item=>`
+
+        <div
+        class="bg-white rounded-2xl shadow-md border border-sky-100 mb-4 p-4 cursor-pointer hover:bg-sky-50 transition"
+        onclick="openPlayer('${item._id}')">
+
+            <div class="flex gap-4">
+
+                <img
+                src="${item.videoDetails?.image || ''}"
+                class="w-24 h-16 rounded-xl object-cover">
+
+                <div class="flex-1">
+
+                    <h2 class="font-bold text-sky-900">
+                        ${item.topic}
+                    </h2>
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        ${item.videoDetails?.duration || ""}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        `).join("");
+
+    }catch(err){
+
+        console.error(err);
+
+        container.innerHTML="<p class='text-center text-red-500 mt-10'>Failed to load lectures.</p>";
+
+    }
+
+}
+
+function openPlayer(id){
+
+    window.location.href=`player.html?videoId=${id}`;
+
+}
+
+loadContent();
+
+</script>
+
 </body>
 </html>
