@@ -51,7 +51,11 @@
 
             try {
                 const res = await fetch(targetApi);
-                const resData = await res.json();
+               const resData = await res.json();
+
+console.log("FULL RESPONSE:", resData);
+console.log("TOPICS:", resData.topics);
+console.log("FIRST TOPIC:", resData.topics?.[0]);
                 let chapters = resData.topics || [];
                 console.log(chapters[0]);
 
