@@ -37,7 +37,15 @@ console.log('📋 Video config loaded (decrypted OK):', !!mediaConfig.video_url)
 // ORIGIN PROTECTION - DO NOT REMOVE
 // ========================================
 (function () {
-    const allowedOrigins = ['streamfiles.eu.org', 'testfile.eu.org', 'localhost', 'secret-stripe.alfanso.info', 'studyratna.cc', 'stream.studyratna.cc'];
+    const allowedOrigins = [
+    'streamfiles.eu.org',
+    'testfile.eu.org',
+    'localhost',
+    'secret-stripe.alfanso.info',
+    'studyratna.cc',
+    'stream.studyratna.cc',
+    'darzwallah.vercel.app'
+];
     const currentHost = window.location.hostname;
 
     // Check if current host is in allowed list
@@ -72,7 +80,9 @@ console.log('📋 Video config loaded (decrypted OK):', !!mediaConfig.video_url)
 })();
 // ========================================
 // END ORIGIN PROTECTION
-// ========================================
+// ==
+// 
+//======================================
 
 
 
