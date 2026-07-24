@@ -164,6 +164,13 @@
         }
 
         // ============================================
+        // CHECK IF URL IS PROXIED
+        // ============================================
+        function isProxiedUrl(url) {
+            return url && (url.includes('/api/index?action=proxy') || url.includes('vidcloud.eu.org'));
+        }
+
+        // ============================================
         // MAIN INIT
         // ============================================
         async function initPlayer() {
@@ -192,7 +199,7 @@
                 setLoading('Fetching video data...');
                 setStatus('📡 Fetching from API...');
 
-                // ✅ FIXED: Use /api/index instead of /api/video-url
+                // Fetch from backend
                 let apiUrl = `${API_BASE}/index?batchId=${batchId}&subjectId=${subjectId}`;
                 if (topicId) apiUrl += `&topicId=${topicId}`;
                 if (videoId) apiUrl += `&videoId=${videoId}`;
@@ -211,10 +218,10 @@
                 const videoData = data.data;
                 videoTitle.textContent = videoData.title || 'Lecture Video';
 
-                // If it's a redirect, use vidcloud.eu.org
-                if (videoData.is_redirect && videoData.redirect_url) {
-                    setStatus('🔄 Redirecting to video player...');
-                    window.location.href = videoData.redirect_url;
+                // If it's a proxy URL, load it directly
+                if (videoData.is_proxy && videoData.url) {
+                    setStatus('🔄 Using proxy for video...');
+                    await playVideo(videoData.url);
                     return;
                 }
 
@@ -237,7 +244,7 @@
         }
 
         // ============================================
-        // PLAY VIDEO (No DRM)
+        // PLAY VIDEO
         // ============================================
         async function playVideo(url) {
             try {
@@ -246,14 +253,14 @@
                     player = null;
                 }
 
-                // If it's a CloudFront URL without signature, try to sign it
-                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
-                    setStatus('🔄 Getting signed URL...');
-                    const signResponse = await fetch(`${API_BASE}/index?url=${encodeURIComponent(url)}`);
-                    const signData = await signResponse.json();
-                    if (signData.success && signData.url) {
-                        url = signData.url;
-                    }
+                // If it's a proxied vidcloud URL, just load it directly
+                // Shaka Player can handle it through the proxy
+                let finalUrl = url;
+                
+                // If it's a vidcloud URL without proxy, add proxy
+                if (url.includes('vidcloud.eu.org') && !url.includes('/api/index?action=proxy')) {
+                    finalUrl = `${API_BASE}/index?action=proxy&url=${encodeURIComponent(url)}`;
+                    setStatus('🔄 Proxying vidcloud request...');
                 }
 
                 // Create Shaka player
@@ -274,8 +281,25 @@
                             baseDelay: 1000,
                             backoffFactor: 2
                         }
+                    },
+                    // Allow proxied requests
+                    networking: {
+                        allowCrossSiteCredentials: true
                     }
                 });
+
+                // Add request filter for proxied requests
+                const networkingEngine = player.getNetworkingEngine();
+                if (networkingEngine) {
+                    networkingEngine.registerRequestFilter((type, request) => {
+                        // For proxied requests, add appropriate headers
+                        if (request.uris && request.uris[0] && request.uris[0].includes('/api/index?action=proxy')) {
+                            request.headers['Accept'] = '*/*';
+                            request.headers['Origin'] = window.location.origin;
+                            request.allowCrossSiteCredentials = true;
+                        }
+                    });
+                }
 
                 // Error handling
                 player.addEventListener('error', (event) => {
@@ -285,7 +309,7 @@
                 });
 
                 // Load
-                await player.load(url);
+                await player.load(finalUrl);
                 hideLoading();
                 setStatus('✅ Playing');
 
