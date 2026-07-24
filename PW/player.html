@@ -128,7 +128,6 @@
         // CONFIGURATION
         // ============================================
         const API_BASE = 'https://darzwallah-playerv1.vercel.app/api';
-        const VIDCLOUD_BASE = 'https://vidcloud.eu.org/play.php';
         
         // ============================================
         // DOM REFS
@@ -193,10 +192,12 @@
                 setLoading('Fetching video data...');
                 setStatus('📡 Fetching from API...');
 
-                // Fetch from backend
-                let apiUrl = `${API_BASE}/video-url?batchId=${batchId}&subjectId=${subjectId}`;
+                // ✅ FIXED: Use /api/index instead of /api/video-url
+                let apiUrl = `${API_BASE}/index?batchId=${batchId}&subjectId=${subjectId}`;
                 if (topicId) apiUrl += `&topicId=${topicId}`;
                 if (videoId) apiUrl += `&videoId=${videoId}`;
+                
+                console.log('Fetching:', apiUrl);
                 
                 const response = await fetch(apiUrl);
                 const data = await response.json();
@@ -213,7 +214,6 @@
                 // If it's a redirect, use vidcloud.eu.org
                 if (videoData.is_redirect && videoData.redirect_url) {
                     setStatus('🔄 Redirecting to video player...');
-                    // Redirect to vidcloud.eu.org
                     window.location.href = videoData.redirect_url;
                     return;
                 }
@@ -244,6 +244,16 @@
                 if (player) {
                     try { await player.destroy(); } catch(e) {}
                     player = null;
+                }
+
+                // If it's a CloudFront URL without signature, try to sign it
+                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
+                    setStatus('🔄 Getting signed URL...');
+                    const signResponse = await fetch(`${API_BASE}/index?url=${encodeURIComponent(url)}`);
+                    const signData = await signResponse.json();
+                    if (signData.success && signData.url) {
+                        url = signData.url;
+                    }
                 }
 
                 // Create Shaka player
