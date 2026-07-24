@@ -1,151 +1,407 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">PW Lecture - Darz Wallah</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Darzwallah Player</title>
+    
+    <!-- Load Shaka Player -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.9/shaka-player.compiled.js"></script>
+    
     <style>
-        body, html { margin:0; padding:0; height:100%; background:#000; overflow:hidden; }
-        #shell { width:100%; height:100vh; position:relative; }
-        .loading { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-bar {
+            background: #12121a;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .top-bar .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6C5CE7, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .title {
+            font-size: 14px;
+            color: #8b8b9e;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .video-container {
+            flex: 1;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #00ffcc;
+            z-index: 100;
+            text-align: center;
+            max-width: 90%;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .status-bar.error { color: #ff4757; }
+        .status-bar.hidden { opacity: 0; transform: translateX(-50%) translateY(10px); }
+        
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            background: rgba(0,0,0,0.7);
+        }
+        .loading-overlay.hidden { display: none; }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(108, 92, 231, 0.15);
+            border-top: 3px solid #6C5CE7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 14px;
+            color: #8b8b9e;
+        }
+        
+        @media (max-width: 640px) {
+            .top-bar { padding: 10px 14px; }
+            .top-bar .logo { font-size: 17px; }
+            .top-bar .title { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
 
-<div id="shell">
-    <!-- Player will be initialized by player.js -->
-</div>
+    <div class="top-bar">
+        <div class="logo">Darzwallah</div>
+        <div class="title" id="videoTitle">Loading...</div>
+    </div>
 
-<!-- Hidden fields required by player.js -->
-<input type="hidden" id="data-video-id" value="">
-<input type="hidden" id="data-batch-id" value="">
-<input type="hidden" id="data-subject-id" value="">
-<input type="hidden" id="data-topic-id" value="">
-<input type="hidden" id="data-title" value="">
-<input type="hidden" id="data-video-url" value="">
-<input type="hidden" id="data-original-url" value="">
-<input type="hidden" id="data-signed-url" value="">
-<input type="hidden" id="data-key-id" value="">
-<input type="hidden" id="data-key-value" value="">
-<input type="hidden" id="data-has-drm" value="">
-<input type="hidden" id="data-license-url" value="">
-<input type="hidden" id="data-license-token" value="">
+    <div class="video-container" id="videoContainer">
+        <video id="video" playsinline></video>
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loader-ring"></div>
+            <div class="loading-text" id="loadingText">Loading video...</div>
+        </div>
+    </div>
 
-<script src="player.js"></script>
+    <div class="status-bar hidden" id="statusBar"></div>
 
-<script>
-    // Get parameters from URL
-    const params = new URLSearchParams(window.location.search);
-    
-    const videoId   = params.get('video_id') || params.get('videoId') || '';
-    const batchId   = params.get('batch_id') || params.get('batchId') || '';
-    const subjectId = params.get('subject_id') || params.get('subjectId') || '';
-    const topicId   = params.get('topic_id') || params.get('topicId') || '';
-    const title     = params.get('title') || params.get('chapterName') || 'PW Lecture';
-    const poster    = params.get('poster') || '';
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_BASE = 'https://darzwallah-playerv1.vercel.app/api';
+        
+        // ============================================
+        // DOM REFS
+        // ============================================
+        const video = document.getElementById('video');
+        const videoTitle = document.getElementById('videoTitle');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const statusBar = document.getElementById('statusBar');
 
-    // Set hidden fields for player.js
-    document.getElementById('data-video-id').value = videoId;
-    document.getElementById('data-batch-id').value = batchId;
-    document.getElementById('data-subject-id').value = subjectId;
-    document.getElementById('data-topic-id').value = topicId;
-    document.getElementById('data-title').value = decodeURIComponent(title);
+        let player = null;
+        let statusTimeout = null;
 
-    document.getElementById('pageTitle').textContent = decodeURIComponent(title);
-
-    // Fetch video data and populate player
-    async function initPlayer() {
-        if (!videoId || !batchId || !subjectId) {
-            console.error('❌ Missing required parameters');
-            return;
+        // ============================================
+        // STATUS BAR
+        // ============================================
+        function setStatus(msg, isError = false) {
+            statusBar.textContent = msg;
+            statusBar.className = 'status-bar' + (isError ? ' error' : '');
+            statusBar.classList.remove('hidden');
+            
+            clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                statusBar.classList.add('hidden');
+            }, 5000);
         }
 
-        try {
-            // Get token
-            const token = await getValidToken();
-            if (!token) {
-                console.error('❌ No token available');
-                return;
-            }
+        function setLoading(msg) {
+            loadingText.textContent = msg;
+            loadingOverlay.classList.remove('hidden');
+        }
 
-            // Fetch video details from API
-            const apiUrl = `https://api.penpencil.co/v1/batches/${batchId}/subject/${subjectId}/schedule/${videoId}`;
-            console.log('📡 Fetching video details:', apiUrl);
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
 
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Client-Id': '5eb393ee95fab7468a79d189',
-                    'Client-Type': 'WEB',
-                    'Client-Version': '4.6.5',
-                    'Randomid': crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)
+        // ============================================
+        // MAIN INIT
+        // ============================================
+        async function initPlayer() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                
+                // Check for direct URL mode
+                let videoUrl = params.get('url') || params.get('video_url');
+                
+                if (videoUrl) {
+                    setLoading('Loading video...');
+                    videoTitle.textContent = params.get('title') || 'Lecture Video';
+                    await playVideo(videoUrl);
+                    return;
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
+                // API mode: Get video from backend
+                const batchId = params.get('batchId') || params.get('batch_id');
+                const subjectId = params.get('subjectId') || params.get('subject_id');
+                const scheduleId = params.get('scheduleId') || params.get('schedule_id') || params.get('videoId') || params.get('video_id');
+
+                if (!batchId || !subjectId) {
+                    throw new Error('Missing parameters. Use: ?url=VIDEO_URL OR ?batchId=&subjectId=');
+                }
+
+                setLoading('Fetching video data...');
+                setStatus('📡 Fetching from API...');
+
+                // Fetch video data from backend
+                const apiUrl = `${API_BASE}/video-url?batchId=${batchId}&subjectId=${subjectId}${scheduleId ? '&scheduleId=' + scheduleId : ''}`;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (!data.success || !data.data) {
+                    throw new Error(data.error || 'Failed to fetch video');
+                }
+
+                const videoData = data.data;
+                videoTitle.textContent = videoData.title || 'Lecture Video';
+
+                // Check if we have DRM
+                if (videoData.has_drm && videoData.key_id && videoData.key_value) {
+                    setStatus('🔐 DRM protected video');
+                    await playWithDRM(videoData);
+                } else if (videoData.url) {
+                    setLoading('Loading video...');
+                    await playVideo(videoData.url);
+                } else {
+                    throw new Error('No video URL found');
+                }
+
+            } catch (error) {
+                console.error('Init error:', error);
+                setStatus('❌ ' + error.message, true);
+                hideLoading();
             }
-
-            const result = await response.json();
-            const data = result.data || {};
-
-            console.log('✅ Video details loaded:', data);
-
-            // Populate hidden fields with video data
-            const videoUrl = data.videoUrl || data.video_url || '';
-            const originalUrl = data.originalUrl || data.original_url || '';
-            const signedUrl = data.signedUrl || data.signed_url || '';
-            const keyId = data.keyId || data.key_id || '';
-            const keyValue = data.keyValue || data.key_value || '';
-            const hasDrm = data.hasDrm || data.has_drm || '';
-            const licenseUrl = data.licenseUrl || data.license_url || '';
-            const licenseToken = data.licenseToken || data.license_token || '';
-
-            document.getElementById('data-video-url').value = videoUrl;
-            document.getElementById('data-original-url').value = originalUrl;
-            document.getElementById('data-signed-url').value = signedUrl;
-            document.getElementById('data-key-id').value = keyId;
-            document.getElementById('data-key-value').value = keyValue;
-            document.getElementById('data-has-drm').value = hasDrm ? '1' : '0';
-            document.getElementById('data-license-url').value = licenseUrl;
-            document.getElementById('data-license-token').value = licenseToken;
-
-            // Initialize player
-            if (typeof boot === 'function') {
-                console.log('🚀 Booting player...');
-                boot();
-            } else {
-                console.log('⏳ Waiting for player.js to load...');
-                // Wait for player.js to fully load
-                const checkBoot = setInterval(() => {
-                    if (typeof boot === 'function') {
-                        clearInterval(checkBoot);
-                        console.log('🚀 Booting player...');
-                        boot();
-                    }
-                }, 100);
-            }
-
-        } catch (error) {
-            console.error('❌ Error loading video:', error);
-            document.getElementById('shell').innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:center;height:100vh;color:white;flex-direction:column;gap:20px;">
-                    <p style="color:red;">Failed to load video: ${error.message}</p>
-                    <button onclick="location.reload()" style="padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer;">Retry</button>
-                </div>
-            `;
         }
-    }
 
-    // Wait for player.js to load then init
-    window.addEventListener('load', function() {
-        console.log('📄 Page loaded, initializing...');
-        // Small delay to ensure player.js is fully loaded
-        setTimeout(initPlayer, 500);
-    });
-</script>
+        // ============================================
+        // PLAY VIDEO (No DRM)
+        // ============================================
+        async function playVideo(url) {
+            try {
+                // Destroy existing player
+                if (player) {
+                    try { await player.destroy(); } catch(e) {}
+                    player = null;
+                }
 
+                // Check if it's a CloudFront URL - use proxy
+                let finalUrl = url;
+                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
+                    setStatus('🔄 Using proxy for CloudFront...');
+                    finalUrl = `${API_BASE}/proxy?url=${encodeURIComponent(url)}`;
+                }
+
+                // Create Shaka player
+                player = new shaka.Player(video);
+                
+                // Configure
+                player.configure({
+                    streaming: {
+                        retryParameters: {
+                            maxAttempts: 5,
+                            baseDelay: 1000,
+                            backoffFactor: 2
+                        }
+                    },
+                    manifest: {
+                        retryParameters: {
+                            maxAttempts: 5,
+                            baseDelay: 1000,
+                            backoffFactor: 2
+                        }
+                    }
+                });
+
+                // Error handling
+                player.addEventListener('error', (event) => {
+                    const detail = event.detail;
+                    console.error('Player error:', detail);
+                    setStatus('⚠️ ' + (detail.message || 'Playback error'), true);
+                });
+
+                // Load
+                await player.load(finalUrl);
+                hideLoading();
+                setStatus('✅ Playing');
+
+                // Auto-play
+                try {
+                    await video.play();
+                } catch (e) {
+                    console.log('Auto-play blocked');
+                }
+
+            } catch (error) {
+                throw new Error('Failed to play video: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // PLAY WITH DRM
+        // ============================================
+        async function playWithDRM(videoData) {
+            try {
+                if (player) {
+                    try { await player.destroy(); } catch(e) {}
+                    player = null;
+                }
+
+                player = new shaka.Player(video);
+
+                // Configure DRM
+                const config = {
+                    drm: {
+                        clearKeys: {
+                            [videoData.key_id]: videoData.key_value
+                        }
+                    },
+                    streaming: {
+                        retryParameters: {
+                            maxAttempts: 5,
+                            baseDelay: 1000,
+                            backoffFactor: 2
+                        }
+                    },
+                    manifest: {
+                        retryParameters: {
+                            maxAttempts: 5,
+                            baseDelay: 1000,
+                            backoffFactor: 2
+                        }
+                    }
+                };
+
+                player.configure(config);
+
+                // Error handling
+                player.addEventListener('error', (event) => {
+                    const detail = event.detail;
+                    console.error('DRM error:', detail);
+                    setStatus('⚠️ DRM error: ' + (detail.message || 'Unknown'), true);
+                });
+
+                // Load
+                let url = videoData.url;
+                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
+                    url = `${API_BASE}/proxy?url=${encodeURIComponent(url)}`;
+                }
+
+                await player.load(url);
+                hideLoading();
+                setStatus('🔐 DRM video playing');
+
+                try {
+                    await video.play();
+                } catch (e) {
+                    console.log('Auto-play blocked');
+                }
+
+            } catch (error) {
+                throw new Error('DRM playback failed: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case ' ':
+                case 'k':
+                    e.preventDefault();
+                    video.paused ? video.play() : video.pause();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    video.currentTime += 10;
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    video.currentTime -= 10;
+                    break;
+                case 'f':
+                case 'F':
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                    break;
+            }
+        });
+
+        // ============================================
+        // HANDLE VISIBILITY
+        // ============================================
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && video && !video.paused) {
+                video.pause();
+            }
+        });
+
+        // ============================================
+        // START
+        // ============================================
+        document.addEventListener('DOMContentLoaded', initPlayer);
+    </script>
 </body>
 </html>
