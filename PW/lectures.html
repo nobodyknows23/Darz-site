@@ -77,7 +77,7 @@ async function loadContent(){
 
         <div
         class="bg-white rounded-2xl shadow-md border border-sky-100 mb-4 p-4 cursor-pointer hover:bg-sky-50 transition"
-        onclick="openPlayer('${item._id}')">
+   onclick="openPlayer('${encodeURIComponent(item.videoDetails.videoUrl)}')"
 
             <div class="flex gap-4">
 
@@ -113,9 +113,10 @@ async function loadContent(){
 
 }
 
-function openPlayer(id){
+function openPlayer(videoUrl){
 
-    window.location.href=`player.html?videoId=${id}`;
+    window.location.href =
+`https://darzwallah-playerv1.vercel.app/player.html?url=${videoUrl}`;
 
 }
 
