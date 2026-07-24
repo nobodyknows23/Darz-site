@@ -4,114 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Darzwallah Player</title>
-    
-    <!-- Load Shaka Player -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.9/shaka-player.compiled.js"></script>
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-        background: #0a0a0f;
-        color: #fff;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .top-bar {
-        background: #12121a;
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        flex-shrink: 0;
-    }
-    .top-bar .logo {
-        font-size: 20px;
-        font-weight: 800;
-        background: linear-gradient(135deg, #6C5CE7, #00cec9);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .top-bar .title {
-        font-size: 14px;
-        color: #8b8b9e;
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .video-container {
-        flex: 1;
-        background: #000;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-    video {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        background: #000;
-    }
-    
-    .status-bar {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(12px);
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 12px;
-        color: #00ffcc;
-        z-index: 100;
-        text-align: center;
-        max-width: 90%;
-        pointer-events: none;
-        transition: all 0.3s ease;
-    }
-    .status-bar.error { color: #ff4757; }
-    .status-bar.hidden { opacity: 0; transform: translateX(-50%) translateY(10px); }
-    
-    .loading-overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        background: rgba(0,0,0,0.7);
-    }
-    .loading-overlay.hidden { display: none; }
-    .loader-ring {
-        width: 48px;
-        height: 48px;
-        border: 3px solid rgba(108, 92, 231, 0.15);
-        border-top: 3px solid #6C5CE7;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-bottom: 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text {
-        font-size: 14px;
-        color: #8b8b9e;
-    }
-    
-    @media (max-width: 640px) {
-        .top-bar { padding: 10px 14px; }
-        .top-bar .logo { font-size: 17px; }
-        .top-bar .title { font-size: 12px; }
-    }
-</style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            background: #12121a;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .top-bar .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6C5CE7, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .top-bar .title {
+            font-size: 14px;
+            color: #8b8b9e;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .video-container {
+            flex: 1;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #00ffcc;
+            z-index: 100;
+            text-align: center;
+            max-width: 90%;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .status-bar.error { color: #ff4757; }
+        .status-bar.hidden { opacity: 0; transform: translateX(-50%) translateY(10px); }
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            background: rgba(0,0,0,0.7);
+        }
+        .loading-overlay.hidden { display: none; }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(108, 92, 231, 0.15);
+            border-top: 3px solid #6C5CE7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 14px;
+            color: #8b8b9e;
+        }
+        @media (max-width: 640px) {
+            .top-bar { padding: 10px 14px; }
+            .top-bar .logo { font-size: 17px; }
+            .top-bar .title { font-size: 12px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -135,6 +128,7 @@
         // CONFIGURATION
         // ============================================
         const API_BASE = 'https://darzwallah-playerv1.vercel.app/api';
+        const VIDCLOUD_BASE = 'https://vidcloud.eu.org/play.php';
         
         // ============================================
         // DOM REFS
@@ -155,7 +149,6 @@
             statusBar.textContent = msg;
             statusBar.className = 'status-bar' + (isError ? ' error' : '');
             statusBar.classList.remove('hidden');
-            
             clearTimeout(statusTimeout);
             statusTimeout = setTimeout(() => {
                 statusBar.classList.add('hidden');
@@ -180,7 +173,6 @@
                 
                 // Check for direct URL mode
                 let videoUrl = params.get('url') || params.get('video_url');
-                
                 if (videoUrl) {
                     setLoading('Loading video...');
                     videoTitle.textContent = params.get('title') || 'Lecture Video';
@@ -188,10 +180,11 @@
                     return;
                 }
 
-                // API mode: Get video from backend
+                // Get parameters
                 const batchId = params.get('batchId') || params.get('batch_id');
                 const subjectId = params.get('subjectId') || params.get('subject_id');
-                const scheduleId = params.get('scheduleId') || params.get('schedule_id') || params.get('videoId') || params.get('video_id');
+                const topicId = params.get('topicId') || params.get('topic_id');
+                const videoId = params.get('videoId') || params.get('video_id') || params.get('scheduleId');
 
                 if (!batchId || !subjectId) {
                     throw new Error('Missing parameters. Use: ?url=VIDEO_URL OR ?batchId=&subjectId=');
@@ -200,13 +193,10 @@
                 setLoading('Fetching video data...');
                 setStatus('📡 Fetching from API...');
 
-                // Fetch video data from backend
+                // Fetch from backend
                 let apiUrl = `${API_BASE}/video-url?batchId=${batchId}&subjectId=${subjectId}`;
-                if (scheduleId) {
-                    apiUrl += `&scheduleId=${scheduleId}`;
-                }
-                
-                console.log('Fetching:', apiUrl);
+                if (topicId) apiUrl += `&topicId=${topicId}`;
+                if (videoId) apiUrl += `&videoId=${videoId}`;
                 
                 const response = await fetch(apiUrl);
                 const data = await response.json();
@@ -220,7 +210,15 @@
                 const videoData = data.data;
                 videoTitle.textContent = videoData.title || 'Lecture Video';
 
-                // Check if we have DRM
+                // If it's a redirect, use vidcloud.eu.org
+                if (videoData.is_redirect && videoData.redirect_url) {
+                    setStatus('🔄 Redirecting to video player...');
+                    // Redirect to vidcloud.eu.org
+                    window.location.href = videoData.redirect_url;
+                    return;
+                }
+
+                // Check for DRM
                 if (videoData.has_drm && videoData.key_id && videoData.key_value) {
                     setStatus('🔐 DRM protected video');
                     await playWithDRM(videoData);
@@ -243,18 +241,9 @@
         // ============================================
         async function playVideo(url) {
             try {
-                // Destroy existing player
                 if (player) {
                     try { await player.destroy(); } catch(e) {}
                     player = null;
-                }
-
-                // Check if it's a CloudFront URL - use proxy
-                let finalUrl = url;
-                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
-                    setStatus('🔄 Using proxy for CloudFront...');
-                    finalUrl = `${API_BASE}/proxy?url=${encodeURIComponent(url)}`;
-                    console.log('Proxy URL:', finalUrl);
                 }
 
                 // Create Shaka player
@@ -286,11 +275,10 @@
                 });
 
                 // Load
-                await player.load(finalUrl);
+                await player.load(url);
                 hideLoading();
                 setStatus('✅ Playing');
 
-                // Auto-play
                 try {
                     await video.play();
                 } catch (e) {
@@ -346,13 +334,7 @@
                     setStatus('⚠️ DRM error: ' + (detail.message || 'Unknown'), true);
                 });
 
-                // Load
-                let url = videoData.url;
-                if (url.includes('cloudfront.net') && !url.includes('Signature=')) {
-                    url = `${API_BASE}/proxy?url=${encodeURIComponent(url)}`;
-                }
-
-                await player.load(url);
+                await player.load(videoData.url);
                 hideLoading();
                 setStatus('🔐 DRM video playing');
 
@@ -372,7 +354,6 @@
         // ============================================
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
-            
             switch(e.key) {
                 case ' ':
                 case 'k':
@@ -398,18 +379,12 @@
             }
         });
 
-        // ============================================
-        // HANDLE VISIBILITY
-        // ============================================
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && video && !video.paused) {
                 video.pause();
             }
         });
 
-        // ============================================
-        // START
-        // ============================================
         document.addEventListener('DOMContentLoaded', initPlayer);
     </script>
 </body>
